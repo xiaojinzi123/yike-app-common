@@ -1,15 +1,21 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.xiaojinzi.tally.module.base.view.compose
 
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FractionalThreshold
-import androidx.compose.material.swipeable
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,11 +46,11 @@ import com.xiaojinzi.support.bean.StringItemDto
 import com.xiaojinzi.support.compose.util.contentWithComposable
 import com.xiaojinzi.support.ktx.Assert
 import com.xiaojinzi.support.ktx.nothing
-import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_NORMAL
-import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_SMALL
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlin.math.roundToInt
+
+enum class DragValue { Start, Center, End }
 
 @Composable
 fun WheelItem(
@@ -195,16 +202,41 @@ fun <T> WheelViewRaw(
 
     val firstAnchorIndex = anchorList.last().second
 
-    val swipeableState =
-        androidx.compose.material.rememberSwipeableState(firstAnchorIndex - wheelState.currentIndex)
+    val anchors = DraggableAnchors {
+        ((1 - itemCount)..(0))
+            .map {
+                it + anchorOffset
+            }
+            .map {
+                (itemHeightPx * it).roundToInt() to it
+            }.forEach { entity ->
+                entity.first at entity.second.toFloat()
+            }
+    }
+
+    val anchoredDraggableState = remember {
+        AnchoredDraggableState(
+            initialValue = firstAnchorIndex - wheelState.currentIndex,
+            anchors = anchors,
+            // 3
+            positionalThreshold = { distance: Float -> distance * 0.5f },
+            velocityThreshold = { 1f },
+            snapAnimationSpec = tween(),
+            decayAnimationSpec = exponentialDecay(),
+        )
+    }
+
+    /*val swipeableState =
+        androidx.compose.material.rememberSwipeableState(firstAnchorIndex - wheelState.currentIndex)*/
+
     val swipeableStateTargetValue = firstAnchorIndex - wheelState.currentIndex
-    if (swipeableState.currentValue != swipeableStateTargetValue) {
+    if (anchoredDraggableState.currentValue != swipeableStateTargetValue) {
         LaunchedEffect(key1 = null) {
-            swipeableState.animateTo(targetValue = swipeableStateTargetValue)
+            anchoredDraggableState.animateTo(targetValue = swipeableStateTargetValue)
         }
     }
-    LaunchedEffect(key1 = swipeableState) {
-        snapshotFlow { swipeableState.currentValue }
+    LaunchedEffect(key1 = anchoredDraggableState) {
+        snapshotFlow { anchoredDraggableState.currentValue }
             .onEach {
                 val itemIndex = firstAnchorIndex - it
                 if (wheelState.currentIndex != itemIndex) {
@@ -228,12 +260,16 @@ fun <T> WheelViewRaw(
             .fillMaxWidth()
             .then(modifier)
             .height(containerHeight)
-            .swipeable(
+            .anchoredDraggable(
+                state = anchoredDraggableState,
+                orientation = Orientation.Vertical,
+            )
+            /*.swipeable(
                 state = swipeableState,
                 anchors = anchorMap,
                 thresholds = { _, _ -> FractionalThreshold(0.5f) },
                 orientation = Orientation.Vertical
-            )
+            )*/
             .drawWithContent {
                 val lineWidth = drawContext.size.width * lineWidthPercent
                 val lineStart = (drawContext.size.width - lineWidth) / 2f
@@ -278,7 +314,7 @@ fun <T> WheelViewRaw(
                 .fillMaxWidth()
                 .offset { IntOffset(0, offsetY.roundToInt()) }
                 // 滚动的吸附的偏移
-                .offset { IntOffset(0, swipeableState.offset.value.roundToInt()) }
+                .offset { IntOffset(0, anchoredDraggableState.offset.roundToInt()) }
                 .nothing(),
         ) {
             items.forEachIndexed { index, t ->

@@ -112,10 +112,8 @@ fun BillView(
                 bookSelected?.id?.run {
                     AppServices
                         .tallyDataSyncSpi
-                        ?.trySync(
-                            bookIdList = listOf(
-                                this,
-                            )
+                        ?.trySyncSingleBook(
+                            bookId = this,
                         )
                 }
             },

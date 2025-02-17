@@ -33,8 +33,6 @@ import com.xiaojinzi.tally.module.base.support.isInstallWx
 import com.xiaojinzi.tally.module.user.module.my.view.MyView
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map

@@ -292,7 +292,7 @@ interface TallyDataSourceSpi {
         target: TallyBillInsertDto,
         labelIdList: List<String> = emptyList(),
         imageUrlList: List<String> = emptyList(),
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     ): String
 
     /**
@@ -302,7 +302,7 @@ interface TallyDataSourceSpi {
         target: TallyBillDto,
         labelIdList: List<String> = emptyList(),
         imageUrlList: List<String> = emptyList(),
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     )
 
     /**
@@ -312,7 +312,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun insertOrUpdateBillList(
         targetList: List<TallyBillInsertDto>,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     ): List<String>
 
     /**
@@ -417,7 +417,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun insertOrUpdateBillLabelList(
         targetList: List<TallyBillLabelInsertDto>,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     ): List<String>
 
     /**
@@ -433,7 +433,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun insertOrUpdateBillImageList(
         targetList: List<TallyBillImageInsertDto>,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     ): List<String>
 
     /**
@@ -457,7 +457,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun insertCategory(
         target: TallyCategoryInsertDto,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     ): String
 
     /**
@@ -465,7 +465,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun insertOrUpdateCategoryList(
         targetList: List<TallyCategoryInsertDto>,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     ): List<String>
 
     /**
@@ -473,7 +473,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun updateCategory(
         target: TallyCategoryDto,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     )
 
     /**
@@ -481,7 +481,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun updateCategoryList(
         targetList: List<TallyCategoryDto>,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     )
 
     /**
@@ -545,7 +545,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun insertOrUpdateAccount(
         target: TallyAccountInsertDto,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     ): String
 
     /**
@@ -553,7 +553,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun insertOrUpdateAccountList(
         targetList: List<TallyAccountInsertDto>,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     ): List<String>
 
     /**
@@ -561,7 +561,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun updateAccount(
         target: TallyAccountDto,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     )
 
     /**
@@ -616,12 +616,12 @@ interface TallyDataSourceSpi {
 
     suspend fun insertLabel(
         target: TallyLabelInsertDto,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     ): String
 
     suspend fun updateLabel(
         target: TallyLabelDto,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     )
 
     /**
@@ -629,7 +629,7 @@ interface TallyDataSourceSpi {
      */
     suspend fun insertOrUpdateLabelList(
         targetList: List<TallyLabelInsertDto>,
-        isNeedSync: Boolean = true,
+        isNeedSync: Boolean = false,
     ): List<String>
 
     suspend fun getLabel(

@@ -122,6 +122,11 @@ interface LoginUseCase : BusinessUseCase {
      */
     val canSubmitStateOb: HotStateFlow<Boolean>
 
+    /**
+     * 是否可提交, 绑定手机号的界面
+     */
+    val canSubmitForBindPhoneNUmberStateOb: HotStateFlow<Boolean>
+
 }
 
 class LoginUseCaseImpl(
@@ -177,6 +182,12 @@ class LoginUseCaseImpl(
         name.text.isNotBlank() && password.text.isNotBlank() && hasReadAgreement
     }
 
+    override val canSubmitForBindPhoneNUmberStateOb = combine(
+        phoneNumberStateOb,
+        checkCodeStateOb,
+    ) { phoneNumber, checkCode ->
+        phoneNumber.text.isNotBlank() && checkCode.text.isNotBlank()
+    }
 
     private suspend fun reset() {
         phoneNumberStateOb.emit(
@@ -366,7 +377,6 @@ class LoginUseCaseImpl(
     }
 
     init {
-
         val forOpenSource = AppServices.appInfoSpi.forOpenSource
         // 如果是开源版本, 自动完成登录
         if (forOpenSource) {
@@ -401,7 +411,6 @@ class LoginUseCaseImpl(
                 }
             }
         }
-
     }
 
 }

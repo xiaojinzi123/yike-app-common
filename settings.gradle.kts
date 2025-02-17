@@ -1,12 +1,12 @@
 pluginManagement {
     includeBuild("./build-logic")
     repositories {
-        maven {
-            url = uri("https://jitpack.io")
-        }
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven {
+            url = uri("https://jitpack.io")
+        }
     }
 }
 dependencyResolutionManagement {
@@ -17,14 +17,14 @@ dependencyResolutionManagement {
     }
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        maven {
-            url = uri("https://jitpack.io")
-        }
         google()
         mavenCentral()
         // 添加阿里的镜像 Maven
         maven {
             url = uri("https://maven.aliyun.com/nexus/content/groups/public/")
+        }
+        maven {
+            url = uri("https://jitpack.io")
         }
     }
 }

@@ -77,7 +77,7 @@ private fun BindPhoneView(
     ) { vm ->
         val phoneNumber by vm.phoneNumberStateOb.collectAsState(initial = TextFieldValue(text = ""))
         val checkCode by vm.checkCodeStateOb.collectAsState(initial = TextFieldValue(text = ""))
-        val canSubmit by vm.canSubmitStateOb.collectAsState(initial = false)
+        val canSubmit by vm.canSubmitForBindPhoneNUmberStateOb.collectAsState(initial = false)
         val sendCheckCodeCountDown by vm.sendCheckCodeCountDownStateOb.collectAsState(initial = null)
 
         val focusRequesterForPhoneName = remember { FocusRequester() }

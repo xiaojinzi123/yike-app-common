@@ -789,10 +789,8 @@ fun MyView(
                                 selectedBookInfo?.run {
                                     AppServices
                                         .tallyDataSyncSpi
-                                        ?.trySync(
-                                            bookIdList = listOf(
-                                                this.id,
-                                            )
+                                        ?.trySyncSingleBook(
+                                            bookId = this.id,
                                         )
                                 }
                             } else {

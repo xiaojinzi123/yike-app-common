@@ -85,7 +85,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalComposeUiApi::class)
 @InternalCoroutinesApi
 @ExperimentalMaterial3Api
 @ExperimentalAnimationApi
