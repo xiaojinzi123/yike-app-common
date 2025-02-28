@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalFoundationApi::class)
-
 package com.xiaojinzi.tally.module.base.view.compose
 
 import androidx.compose.animation.core.exponentialDecay
@@ -15,8 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,7 +40,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.xiaojinzi.support.bean.StringItemDto
 import com.xiaojinzi.support.compose.util.contentWithComposable
-import com.xiaojinzi.support.ktx.Assert
 import com.xiaojinzi.support.ktx.nothing
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -134,7 +129,7 @@ fun <T> WheelView(
 @Composable
 fun <T> WheelViewWithIndex(
     modifier: Modifier = Modifier,
-    visibleCount: Int = 5,
+    visibleCount: Int = 3,
     lineThickness: Dp = 1.dp,
     itemHeight: Dp = 48.dp,
     lineWidthPercent: Float = 1f,
@@ -155,11 +150,11 @@ fun <T> WheelViewWithIndex(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun <T> WheelViewRaw(
     modifier: Modifier = Modifier,
-    visibleCount: Int = 5,
+    visibleCount: Int = 3,
     lineThickness: Dp = 1.dp,
     lineWidthPercent: Float = 1f,
     itemHeight: Dp = 48.dp,
@@ -170,11 +165,16 @@ fun <T> WheelViewRaw(
 
     val itemCount = items.size
     // 必须至少有一个
-    Assert.assertTrue(b = itemCount > 0, message = "items is empty")
+    check(value = itemCount > 0, lazyMessage = { "items is empty" })
     // 选中的下标不可以超过 items 的长度
-    Assert.assertTrue(b = wheelState.currentIndex < itemCount)
+    check(
+        value = wheelState.currentIndex > -1 && wheelState.currentIndex < itemCount,
+        lazyMessage = {
+            "wheelState.currentIndex = ${wheelState.currentIndex}, itemCount = $itemCount"
+        },
+    )
     val targetSelectIndex: Int = (visibleCount) / 2
-    println("targetSelectIndex = $targetSelectIndex")
+    println("wheelState.currentIndex = ${wheelState.currentIndex}, targetSelectIndex = $targetSelectIndex")
     val containerHeight: Dp = itemHeight * visibleCount
     val itemHeightPx: Float = with(LocalDensity.current) { itemHeight.toPx() }
     // 因为容器内的内容是居中的, 为了贴合 top, 所以计算需要的偏移
@@ -190,37 +190,32 @@ fun <T> WheelViewRaw(
     // 只需要将 [anchorStart, anchorEnd] 整体移动一个偏移量 anchorOffset
     val anchorOffset = targetSelectIndex - 0
 
-    val anchorList = ((1 - itemCount)..(0))
-        .map {
-            it + anchorOffset
-        }
-        .map {
-            (itemHeightPx * it) to it
-        }
-
-    val anchorMap = anchorList.toMap()
-
-    val firstAnchorIndex = anchorList.last().second
-
-    val anchors = DraggableAnchors {
-        ((1 - itemCount)..(0))
-            .map {
-                it + anchorOffset
-            }
-            .map {
-                (itemHeightPx * it).roundToInt() to it
-            }.forEach { entity ->
-                entity.first at entity.second.toFloat()
-            }
+    val anchorList by remember(key1 = itemCount) {
+        mutableStateOf(
+            value = ((1 - itemCount)..(0))
+                .map {
+                    it + anchorOffset
+                }
+                .map {
+                    it to (itemHeightPx * it).roundToInt()
+                }
+        )
     }
 
-    val anchoredDraggableState = remember {
+    val firstAnchorIndex = anchorList.last().first
+
+    val anchoredDraggableState = remember(key1 = itemCount) {
         AnchoredDraggableState(
             initialValue = firstAnchorIndex - wheelState.currentIndex,
-            anchors = anchors,
+            anchors = DraggableAnchors {
+                anchorList
+                    .forEach { entity ->
+                        entity.first at entity.second.toFloat()
+                    }
+            },
             // 3
-            positionalThreshold = { distance: Float -> distance * 0.5f },
-            velocityThreshold = { 1f },
+            positionalThreshold = { distance: Float -> distance},
+            velocityThreshold = { Float.MAX_VALUE },
             snapAnimationSpec = tween(),
             decayAnimationSpec = exponentialDecay(),
         )
@@ -248,7 +243,7 @@ fun <T> WheelViewRaw(
 
     // 计算当前选中的 item 的下标
 
-    val targetLineThickness = with(LocalDensity.current) {
+    val targetLineThickness = with(receiver = LocalDensity.current) {
         lineThickness.toPx()
     }
     val surfaceColorAtElevationColor = MaterialTheme.colorScheme.surfaceColorAtElevation(
@@ -312,9 +307,23 @@ fun <T> WheelViewRaw(
             itemHeight = itemHeight,
             modifier = Modifier
                 .fillMaxWidth()
-                .offset { IntOffset(0, offsetY.roundToInt()) }
+                .offset {
+                    IntOffset(
+                        x = 0,
+                        y = offsetY.roundToInt(),
+                    )
+                }
                 // 滚动的吸附的偏移
-                .offset { IntOffset(0, anchoredDraggableState.offset.roundToInt()) }
+                .offset {
+                    IntOffset(
+                        x = 0,
+                        y = if (anchoredDraggableState.offset.isNaN()) {
+                            0
+                        } else {
+                            anchoredDraggableState.offset.roundToInt()
+                        }
+                    )
+                }
                 .nothing(),
         ) {
             items.forEachIndexed { index, t ->
@@ -353,7 +362,7 @@ class WheelState(currentIndex: Int) {
 
 @Composable
 fun rememberWheelState(
-    initIndex: Int = 0
+    initIndex: Int = 0,
 ) = rememberSaveable(saver = WheelState.Saver) {
     WheelState(currentIndex = initIndex)
 }
