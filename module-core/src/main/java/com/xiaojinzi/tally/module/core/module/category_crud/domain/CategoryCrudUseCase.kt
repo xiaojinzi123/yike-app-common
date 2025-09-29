@@ -6,8 +6,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.component.support.ParameterSupport
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -47,7 +47,7 @@ sealed class CategoryCrudIntent {
 }
 
 @ViewModelLayer
-interface CategoryCrudUseCase : BusinessUseCase {
+interface CategoryCrudUseCase : BusinessMVIUseCase {
 
     /**
      * 编辑的 Id
@@ -108,7 +108,7 @@ interface CategoryCrudUseCase : BusinessUseCase {
 @ViewModelLayer
 class CategoryCrudUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), CategoryCrudUseCase {
 

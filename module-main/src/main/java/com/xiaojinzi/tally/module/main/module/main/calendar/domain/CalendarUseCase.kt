@@ -2,8 +2,8 @@ package com.xiaojinzi.tally.module.main.module.main.calendar.domain
 
 import androidx.annotation.Keep
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -68,7 +68,7 @@ sealed class CalendarIntent {
 }
 
 @ViewModelLayer
-interface CalendarUseCase : BusinessUseCase {
+interface CalendarUseCase : BusinessMVIUseCase {
 
     companion object {
         val CalendarTitleList = listOf(
@@ -104,7 +104,7 @@ class CalendarUseCaseImpl(
     override val timeSelectUseCase: TimeSelectUseCase = TimeSelectUseCaseImpl(
         commonUseCase = commonUseCase,
     ),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), CalendarUseCase {
 
@@ -240,7 +240,7 @@ class CalendarUseCaseImpl(
             .flowOn(context = Dispatchers.IO)
     }
 
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     @IntentProcess
     private suspend fun submit(intent: CalendarIntent.Submit) {
         // TODO

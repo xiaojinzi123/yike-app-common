@@ -1,8 +1,8 @@
 package com.xiaojinzi.tally.module.core.module.category_info.domain
 
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -31,7 +31,7 @@ sealed class CategoryInfoIntent {
 }
 
 @ViewModelLayer
-interface CategoryInfoUseCase : BusinessUseCase {
+interface CategoryInfoUseCase : BusinessMVIUseCase {
 
     companion object {
         const val TAG = "CategoryInfoUseCase"
@@ -66,7 +66,7 @@ interface CategoryInfoUseCase : BusinessUseCase {
 @ViewModelLayer
 class CategoryInfoUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), CategoryInfoUseCase {
 
@@ -179,7 +179,7 @@ class CategoryInfoUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun submit(intent: CategoryInfoIntent.Submit) {
         // TODO
     }

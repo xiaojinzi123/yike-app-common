@@ -2,8 +2,8 @@ package com.xiaojinzi.tally.module.core.module.category_sub_info.domain
 
 import androidx.annotation.Keep
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -57,7 +57,7 @@ sealed class CategorySubInfoIntent {
 }
 
 @ViewModelLayer
-interface CategorySubInfoUseCase : BusinessUseCase {
+interface CategorySubInfoUseCase : BusinessMVIUseCase {
 
     /**
      * 初始化的 id
@@ -88,7 +88,7 @@ interface CategorySubInfoUseCase : BusinessUseCase {
 @ViewModelLayer
 class CategorySubInfoUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), CategorySubInfoUseCase {
 
@@ -267,7 +267,7 @@ class CategorySubInfoUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun submit(intent: CategorySubInfoIntent.Submit) {
         // TODO
     }

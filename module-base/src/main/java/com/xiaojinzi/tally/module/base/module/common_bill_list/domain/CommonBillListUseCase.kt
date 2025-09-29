@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.DialogUseCase
@@ -87,7 +87,7 @@ class CommonBillQueryConditionUseCaseImpl :
  * 这个通用的列表类. 正常工作需要的条件
  * 1. 一个查询的条件对象 [TallyDataSourceSpi.Companion.BillQueryConditionDto]
  */
-interface CommonBillListUseCase : BusinessUseCase {
+interface CommonBillListUseCase : BusinessMVIUseCase {
 
     companion object {
         const val TAG = "CommonBillListUseCase"
@@ -111,7 +111,7 @@ interface CommonBillListUseCase : BusinessUseCase {
 class CommonBillListUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
     private val commonBillQueryConditionUseCase: CommonBillQueryConditionUseCase,
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), CommonBillListUseCase {
 
@@ -225,7 +225,7 @@ class CommonBillListUseCaseImpl(
         )
         val selectItemList = buildList {
             if (
-                // 只有是我的账单或者是普通账单或者是转账账单才支持复制
+            // 只有是我的账单或者是普通账单或者是转账账单才支持复制
                 isMineBill || billDetail.core.type in listOf(
                     TallyBillDto.Type.NORMAL,
                     TallyBillDto.Type.TRANSFER

@@ -1,8 +1,8 @@
 package com.xiaojinzi.tally.module.core.module.ai_bill_create.domain
 
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -26,7 +26,7 @@ sealed class AiBillCreateIntent {
 }
 
 @ViewModelLayer
-interface AiBillCreateUseCase : BusinessUseCase {
+interface AiBillCreateUseCase : BusinessMVIUseCase {
 
     @StateHotObservable
     val contentStateOb: MutableSharedStateFlow<String>
@@ -36,12 +36,12 @@ interface AiBillCreateUseCase : BusinessUseCase {
 @ViewModelLayer
 class AiBillCreateUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), AiBillCreateUseCase {
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun submit(intent: AiBillCreateIntent.Submit) {
         val currentUserInfo = AppServices.userSpi.requiredUserInfo()
         val content = contentStateOb.firstOrNull()

@@ -2,8 +2,8 @@ package com.xiaojinzi.tally.module.core.module.account_detail.domain
 
 import androidx.annotation.UiContext
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -31,7 +31,7 @@ sealed class AccountDetailIntent {
 }
 
 @ViewModelLayer
-interface AccountDetailUseCase : BusinessUseCase {
+interface AccountDetailUseCase : BusinessMVIUseCase {
 
     val commonBillQueryConditionUseCase: CommonBillQueryConditionUseCase
 
@@ -53,7 +53,7 @@ interface AccountDetailUseCase : BusinessUseCase {
 class AccountDetailUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
     override val commonBillQueryConditionUseCase: CommonBillQueryConditionUseCase = CommonBillQueryConditionUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), AccountDetailUseCase {
 
@@ -104,7 +104,7 @@ class AccountDetailUseCaseImpl(
 
     }
 
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     @IntentProcess
     private suspend fun submit(intent: AccountDetailIntent.Submit) {
         // TODO

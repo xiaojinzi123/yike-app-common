@@ -1,8 +1,8 @@
 package com.xiaojinzi.tally.module.core.module.bill_list.domain
 
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.ViewModelLayer
@@ -16,7 +16,7 @@ sealed class BillListIntent {
 }
 
 @ViewModelLayer
-interface BillListUseCase : BusinessUseCase {
+interface BillListUseCase : BusinessMVIUseCase {
 
     val billQueryConditionUseCase: CommonBillQueryConditionUseCase
 
@@ -26,11 +26,11 @@ interface BillListUseCase : BusinessUseCase {
 class BillListUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
     override val billQueryConditionUseCase: CommonBillQueryConditionUseCase = CommonBillQueryConditionUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BillListUseCase {
 
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     @IntentProcess
     private suspend fun submit(intent: BillListIntent.Submit) {
         // TODO

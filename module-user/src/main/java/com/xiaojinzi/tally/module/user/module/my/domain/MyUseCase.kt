@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.Router
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -33,7 +33,7 @@ sealed class MyIntent {
 }
 
 @ViewModelLayer
-interface MyUseCase : BusinessUseCase {
+interface MyUseCase : BusinessMVIUseCase {
 
     /**
      * 记账的天数
@@ -52,7 +52,7 @@ interface MyUseCase : BusinessUseCase {
 @ViewModelLayer
 class MyUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), MyUseCase {
 
@@ -72,7 +72,7 @@ class MyUseCaseImpl(
         )
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun vipRefresh(intent: MyIntent.VipRefresh) {
         timeAtLeast (
             timeMillis = 800L,

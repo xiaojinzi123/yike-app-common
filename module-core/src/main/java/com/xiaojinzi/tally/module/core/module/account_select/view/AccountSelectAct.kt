@@ -29,7 +29,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 @ViewLayer
 class AccountSelectAct : BaseBusinessAct<AccountSelectViewModel>() {
 
-    @AttrValueAutowiredAnno
+    @AttrValueAutowiredAnno("bookId")
     var bookId: String? = null
 
     override fun getViewModelClass(): Class<AccountSelectViewModel> {

@@ -19,5 +19,6 @@ dependencies {
     api(libs.compose.foundation.android)
     api(libs.compose.foundation.layout.android)
     api(libs.compose.material.android)
+    api(libs.compose.material.icons.extended)
     api(libs.compose.material3)
 }

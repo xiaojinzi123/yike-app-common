@@ -6,8 +6,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.component.support.ParameterSupport
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -106,7 +106,7 @@ sealed class BillSearchIntent {
 }
 
 @ViewModelLayer
-interface BillSearchUseCase : BusinessUseCase {
+interface BillSearchUseCase : BusinessMVIUseCase {
 
     val billQueryConditionUseCase: CommonBillQueryConditionUseCase
 
@@ -231,7 +231,7 @@ interface BillSearchUseCase : BusinessUseCase {
 class BillSearchUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
     override val billQueryConditionUseCase: CommonBillQueryConditionUseCase = CommonBillQueryConditionUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BillSearchUseCase {
 
@@ -414,7 +414,7 @@ class BillSearchUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.ErrorIgnore
+@BusinessMVIUseCase.ErrorIgnore
     private suspend fun timeStartSelect(intent: BillSearchIntent.TimeStartSelect) {
         val (startTime, endTime) = yearSelectRangeTimeStateOb.first()
         val currentEndTime = timeEndStateOb.first()
@@ -445,7 +445,7 @@ class BillSearchUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.ErrorIgnore
+@BusinessMVIUseCase.ErrorIgnore
     private suspend fun timeEndSelect(intent: BillSearchIntent.TimeEndSelect) {
         val (startTime, endTime) = yearSelectRangeTimeStateOb.first()
         val currentStartTime = timeStartStateOb.first()
@@ -717,7 +717,7 @@ class BillSearchUseCaseImpl(
      * null 表示没有数据
      */
     @IntentProcess
-    @BusinessUseCase.ErrorIgnore
+@BusinessMVIUseCase.ErrorIgnore
     private suspend fun doSearch(intent: BillSearchIntent.DoSearch) {
         val isUseAdvancedSearch =  isUseAdvancedSearchStateOb.first()
         val isVip = AppServices.userSpi.isVipStateOb.first()
@@ -893,7 +893,7 @@ class BillSearchUseCaseImpl(
         )
     }
 
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     @IntentProcess
     private suspend fun submit(intent: BillSearchIntent.Submit) {
         // TODO

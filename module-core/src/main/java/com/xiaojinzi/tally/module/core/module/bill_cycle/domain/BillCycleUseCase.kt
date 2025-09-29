@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -51,7 +51,7 @@ sealed class BillCycleIntent {
 }
 
 @ViewModelLayer
-interface BillCycleUseCase : BusinessUseCase {
+interface BillCycleUseCase : BusinessMVIUseCase {
 
     /**
      * 周期任务
@@ -66,7 +66,7 @@ private const val s = "行成功\n稍后账单会同步到"
 @ViewModelLayer
 class BillCycleUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BillCycleUseCase {
 
@@ -84,7 +84,7 @@ class BillCycleUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun stateToggle(intent: BillCycleIntent.StateToggle) {
         val dataList = cycleListStateOb.first()
         dataList.find { it.id == intent.id }?.let { targetItem ->
@@ -112,7 +112,7 @@ class BillCycleUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun runOnce(intent: BillCycleIntent.RunOnce) {
         val dataList = cycleListStateOb.first()
         val billItemResItem = AppServices
@@ -143,7 +143,7 @@ class BillCycleUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun deleteTask(intent: BillCycleIntent.DeleteTask) {
         confirmDialogOrError(
             content = "确定要删除这个任务吗?".toStringItemDto(),

@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.annotation.UiContext
 import com.xiaojinzi.module.common.base.support.CommonServices
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -28,7 +28,7 @@ sealed class VipBuyIntent {
 }
 
 @ViewModelLayer
-interface VipBuyUseCase : BusinessUseCase {
+interface VipBuyUseCase : BusinessMVIUseCase {
 
     /**
      * 可购买项目的列表
@@ -41,7 +41,7 @@ interface VipBuyUseCase : BusinessUseCase {
 @ViewModelLayer
 class VipBuyUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), VipBuyUseCase {
 
@@ -60,7 +60,7 @@ class VipBuyUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun submit(intent: VipBuyIntent.Submit) {
 
         val alipayOrderNo = AppServices

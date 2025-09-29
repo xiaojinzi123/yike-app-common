@@ -285,7 +285,6 @@ private fun CategorySubInfoView(
                         ) { index, item ->
                             Row(
                                 modifier = Modifier
-                                    .animateItemPlacement()
                                     .padding(horizontal = 0.dp, vertical = APP_PADDING_SMALL.dp)
                                     .fillMaxWidth()
                                     .wrapContentHeight()

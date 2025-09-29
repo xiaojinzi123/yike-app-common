@@ -1,8 +1,8 @@
 package com.xiaojinzi.tally.module.core.module.book_crud.domain
 
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.DialogUseCase
@@ -27,7 +27,7 @@ sealed class BookCrudIntent {
 }
 
 @ViewModelLayer
-interface BookCrudUseCase : BusinessUseCase {
+interface BookCrudUseCase : BusinessMVIUseCase {
 
     /**
      * 账本名字
@@ -52,7 +52,7 @@ interface BookCrudUseCase : BusinessUseCase {
 @ViewModelLayer
 class BookCrudUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BookCrudUseCase {
 
@@ -82,7 +82,7 @@ class BookCrudUseCaseImpl(
         )
     }
 
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     @IntentProcess
     private suspend fun submit(intent: BookCrudIntent.Submit) {
         val typeItem = bookTypeSelectedStateOb.firstOrNull()

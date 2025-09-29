@@ -3,8 +3,8 @@ package com.xiaojinzi.tally.module.base.module.center_menu_select.domain
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.HotObservable
@@ -15,7 +15,7 @@ import com.xiaojinzi.support.ktx.tryFinishActivity
 import com.xiaojinzi.tally.lib.res.model.support.MenuItem
 
 @ViewModelLayer
-interface CenterMenuSelectUseCase : BusinessUseCase {
+interface CenterMenuSelectUseCase : BusinessMVIUseCase {
 
     /**
      * 显示的数据
@@ -33,7 +33,7 @@ interface CenterMenuSelectUseCase : BusinessUseCase {
 @ViewModelLayer
 class CenterMenuSelectUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), CenterMenuSelectUseCase {
 

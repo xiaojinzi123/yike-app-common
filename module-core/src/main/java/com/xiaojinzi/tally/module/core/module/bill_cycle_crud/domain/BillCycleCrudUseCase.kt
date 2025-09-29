@@ -5,8 +5,8 @@ import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.component.support.ParameterSupport
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -154,7 +154,7 @@ sealed class BillCycleCrudIntent {
 }
 
 @ViewModelLayer
-interface BillCycleCrudUseCase : BusinessUseCase {
+interface BillCycleCrudUseCase : BusinessMVIUseCase {
 
     /**
      * 编辑的 Id
@@ -286,7 +286,7 @@ interface BillCycleCrudUseCase : BusinessUseCase {
 @ViewModelLayer
 class BillCycleCrudUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BillCycleCrudUseCase {
 
@@ -852,7 +852,7 @@ class BillCycleCrudUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun submit(intent: BillCycleCrudIntent.Submit) {
 
         val cycleType = cycleTypeStateOb.first()

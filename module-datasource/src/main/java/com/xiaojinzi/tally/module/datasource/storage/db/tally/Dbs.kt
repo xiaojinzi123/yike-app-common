@@ -17,7 +17,6 @@ import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.LabelDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.UserInfoCacheDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
-import okhttp3.internal.toHexString
 import java.io.File
 
 

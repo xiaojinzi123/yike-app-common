@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -43,7 +43,7 @@ sealed class BillIntent {
 }
 
 @ViewModelLayer
-interface BillUseCase : BusinessUseCase {
+interface BillUseCase : BusinessMVIUseCase {
 
     val billQueryConditionUseCase: CommonBillQueryConditionUseCase
 
@@ -79,7 +79,7 @@ class BillUseCaseImpl(
     override val timeSelectUseCase: TimeSelectUseCase = TimeSelectUseCaseImpl(
         commonUseCase = commonUseCase,
     ),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BillUseCase {
 
@@ -160,7 +160,7 @@ class BillUseCaseImpl(
             )
     }
 
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     @IntentProcess
     private suspend fun submit(intent: BillIntent.Submit) {
         // TODO

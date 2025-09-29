@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -40,7 +40,7 @@ sealed class BookMemberIntent {
 }
 
 @ViewModelLayer
-interface BookMemberUseCase : BusinessUseCase {
+interface BookMemberUseCase : BusinessMVIUseCase {
 
     /**
      * 账本 Id 的初始化数据
@@ -70,7 +70,7 @@ interface BookMemberUseCase : BusinessUseCase {
 @ViewModelLayer
 class BookMemberUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BookMemberUseCase {
 
@@ -108,7 +108,7 @@ class BookMemberUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun toRemoveOther(intent: BookMemberIntent.ToRemoveOther) {
         val userId = AppServices
             .userSpi

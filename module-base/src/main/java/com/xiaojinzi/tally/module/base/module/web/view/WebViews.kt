@@ -1,7 +1,9 @@
 package com.xiaojinzi.tally.module.base.module.web.view
 
 import android.annotation.SuppressLint
+import android.webkit.WebChromeClient
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
@@ -16,9 +18,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.accompanist.web.AccompanistWebChromeClient
-import com.google.accompanist.web.rememberWebViewState
 import com.xiaojinzi.reactive.template.view.BusinessContentView
 import com.xiaojinzi.support.ktx.nothing
 import com.xiaojinzi.support.ktx.orNull
@@ -40,22 +41,24 @@ private fun WebView(
     ) { vm ->
         val url by vm.urlStateOb.collectAsState(initial = null)
         url.orNull()?.let { url1 ->
-            val state = rememberWebViewState(url = url1)
-            com.google.accompanist.web.WebView(
+            AndroidView(
                 modifier = Modifier
                     .fillMaxSize()
                     .nothing(),
-                state = state,
-                onCreated = {
-                    it.settings.javaScriptEnabled = true
-                },
-                chromeClient = remember {
-                    object : AccompanistWebChromeClient() {
-                        override fun onReceivedTitle(view: WebView, title: String?) {
-                            super.onReceivedTitle(view, title)
-                            vm.titleStateOb.value = title
+                factory = { context ->
+                    WebView(context).apply {
+                        this.webChromeClient = object: WebChromeClient() {
+                            override fun onReceivedTitle(view: WebView, title: String?) {
+                                super.onReceivedTitle(view, title)
+                                vm.titleStateOb.value = title
+                            }
                         }
                     }
+                },
+                update = { webView ->
+                    webView.loadUrl(
+                        url1,
+                    )
                 },
             )
         }

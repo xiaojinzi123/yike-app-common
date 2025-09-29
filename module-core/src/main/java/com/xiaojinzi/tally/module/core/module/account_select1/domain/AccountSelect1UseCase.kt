@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.UiContext
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -33,7 +33,7 @@ sealed class AccountSelect1Intent {
 }
 
 @ViewModelLayer
-interface AccountSelect1UseCase : BusinessUseCase {
+interface AccountSelect1UseCase : BusinessMVIUseCase {
 
     /**
      * 哪个账本下的
@@ -52,7 +52,7 @@ interface AccountSelect1UseCase : BusinessUseCase {
 @ViewModelLayer
 class AccountSelect1UseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), AccountSelect1UseCase {
 

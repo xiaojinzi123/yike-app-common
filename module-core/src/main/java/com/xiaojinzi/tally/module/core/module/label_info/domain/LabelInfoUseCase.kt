@@ -5,8 +5,8 @@ import androidx.annotation.Keep
 import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -57,7 +57,7 @@ data class LabelDetailItemUseCaseDto(
 )
 
 @ViewModelLayer
-interface LabelInfoUseCase : BusinessUseCase {
+interface LabelInfoUseCase : BusinessMVIUseCase {
 
     /**
      * 标签列表, 当前账本的
@@ -76,7 +76,7 @@ interface LabelInfoUseCase : BusinessUseCase {
 @ViewModelLayer
 class LabelInfoUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), LabelInfoUseCase {
 

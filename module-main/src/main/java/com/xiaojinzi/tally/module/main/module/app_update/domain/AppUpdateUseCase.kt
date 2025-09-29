@@ -2,8 +2,8 @@ package com.xiaojinzi.tally.module.main.module.app_update.domain
 
 import com.xiaojinzi.module.common.base.support.CommonServices
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.ViewModelLayer
@@ -19,7 +19,7 @@ sealed class AppUpdateIntent {
 }
 
 @ViewModelLayer
-interface AppUpdateUseCase : BusinessUseCase {
+interface AppUpdateUseCase : BusinessMVIUseCase {
 
     /**
      * 更新的信息
@@ -31,7 +31,7 @@ interface AppUpdateUseCase : BusinessUseCase {
 @ViewModelLayer
 class AppUpdateUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), AppUpdateUseCase {
 

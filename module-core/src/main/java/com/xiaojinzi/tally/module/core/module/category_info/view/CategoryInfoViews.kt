@@ -91,7 +91,6 @@ private fun CategoryInfoPageView(
         ) { index, item ->
             Column(
                 modifier = Modifier
-                    .animateItemPlacement()
                     .padding(horizontal = 0.dp, vertical = APP_PADDING_SMALL.dp)
                     .fillMaxWidth()
                     .wrapContentHeight()

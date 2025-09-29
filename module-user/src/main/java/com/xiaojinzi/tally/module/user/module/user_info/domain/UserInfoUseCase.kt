@@ -1,8 +1,8 @@
 package com.xiaojinzi.tally.module.user.module.user_info.domain
 
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.ViewModelLayer
@@ -14,19 +14,19 @@ sealed class UserInfoIntent {
 }
 
 @ViewModelLayer
-interface UserInfoUseCase : BusinessUseCase {
+interface UserInfoUseCase : BusinessMVIUseCase {
     // TODO
 }
 
 @ViewModelLayer
 class UserInfoUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), UserInfoUseCase {
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun submit(intent: UserInfoIntent.Submit) {
         // TODO
     }

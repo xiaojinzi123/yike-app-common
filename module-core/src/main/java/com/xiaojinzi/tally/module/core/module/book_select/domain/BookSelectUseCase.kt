@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.UiContext
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -45,7 +45,7 @@ sealed class BookSelectIntent {
 }
 
 @ViewModelLayer
-interface BookSelectUseCase : BusinessUseCase {
+interface BookSelectUseCase : BusinessMVIUseCase {
 
     /**
      * 最大选择数量
@@ -70,7 +70,7 @@ interface BookSelectUseCase : BusinessUseCase {
 @ViewModelLayer
 class BookSelectUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BookSelectUseCase {
 

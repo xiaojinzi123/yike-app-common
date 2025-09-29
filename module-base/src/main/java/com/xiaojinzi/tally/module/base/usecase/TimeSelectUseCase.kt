@@ -5,8 +5,8 @@ import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.component.support.ParameterSupport
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.ktx.HotStateFlow
@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.Calendar
 
-interface TimeSelectUseCase : BusinessUseCase {
+interface TimeSelectUseCase : BusinessMVIUseCase {
 
     sealed class Intent {
 
@@ -72,7 +72,7 @@ interface TimeSelectUseCase : BusinessUseCase {
 class TimeSelectUseCaseImpl(
     private val maxTime: Long? = null,
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), TimeSelectUseCase {
 

@@ -5,8 +5,8 @@ import androidx.annotation.UiContext
 import androidx.compose.ui.text.input.TextFieldValue
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.DialogUseCase
 import com.xiaojinzi.support.activity_stack.ActivityStack
 import com.xiaojinzi.support.ktx.HotEventFlow
@@ -69,7 +69,7 @@ sealed class LoginIntent {
     }
 }
 
-interface LoginUseCase : BusinessUseCase {
+interface LoginUseCase : BusinessMVIUseCase {
 
     /**
      * 微信绑定的 authId
@@ -130,7 +130,7 @@ interface LoginUseCase : BusinessUseCase {
 }
 
 class LoginUseCaseImpl(
-) : BusinessUseCaseImpl(), LoginUseCase {
+) : BusinessMVIUseCaseImpl(), LoginUseCase {
 
     override val wxAuthIdInitData = MutableInitOnceData<String?>()
 
@@ -205,7 +205,7 @@ class LoginUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun sendCheckCode(
         intent: LoginIntent.SendCheckCode,
     ) {

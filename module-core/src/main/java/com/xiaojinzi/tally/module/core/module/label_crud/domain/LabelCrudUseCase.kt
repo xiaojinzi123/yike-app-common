@@ -3,8 +3,8 @@ package com.xiaojinzi.tally.module.core.module.label_crud.domain
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -37,7 +37,7 @@ sealed class LabelCrudIntent {
 }
 
 @ViewModelLayer
-interface LabelCrudUseCase : BusinessUseCase {
+interface LabelCrudUseCase : BusinessMVIUseCase {
 
     /**
      * 标签的数量
@@ -80,7 +80,7 @@ interface LabelCrudUseCase : BusinessUseCase {
 @ViewModelLayer
 class LabelCrudUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), LabelCrudUseCase {
 

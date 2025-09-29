@@ -1,8 +1,8 @@
 package com.xiaojinzi.tally.module.base.module.web.domain
 
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -16,7 +16,7 @@ sealed class WebIntent {
 }
 
 @ViewModelLayer
-interface WebUseCase : BusinessUseCase {
+interface WebUseCase : BusinessMVIUseCase {
 
     /**
      * 网页地址
@@ -35,7 +35,7 @@ interface WebUseCase : BusinessUseCase {
 @ViewModelLayer
 class WebUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), WebUseCase {
 
@@ -48,11 +48,11 @@ class WebUseCaseImpl(
     )
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun submit(intent: WebIntent.Submit) {
         // TODO
     }
-    
+
     override fun destroy() {
         super.destroy()
         commonUseCase.destroy()

@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.ViewModelLayer
@@ -57,7 +57,7 @@ sealed class BillDetailIntent {
 }
 
 @ViewModelLayer
-interface BillDetailUseCase : BusinessUseCase {
+interface BillDetailUseCase : BusinessMVIUseCase {
 
     /**
      * 账单 Id
@@ -94,7 +94,7 @@ interface BillDetailUseCase : BusinessUseCase {
 @ViewModelLayer
 class BillDetailUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BillDetailUseCase {
 

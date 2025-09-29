@@ -5,8 +5,9 @@ import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.Router
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.ViewModelLayer
@@ -40,12 +41,12 @@ sealed class SettingIntent {
 }
 
 @ViewModelLayer
-interface SettingUseCase : BusinessUseCase
+interface SettingUseCase : BusinessMVIUseCase
 
 @ViewModelLayer
 class SettingUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), SettingUseCase {
 

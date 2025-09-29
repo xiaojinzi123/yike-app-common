@@ -69,7 +69,6 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.support.bean.StringItemDto
 import com.xiaojinzi.support.compose.util.contentWithComposable

@@ -3,8 +3,8 @@ package com.xiaojinzi.tally.module.core.module.account_info.domain
 import androidx.annotation.DrawableRes
 import androidx.annotation.Keep
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -38,7 +38,7 @@ sealed class AccountInfoIntent {
 }
 
 @ViewModelLayer
-interface AccountInfoUseCase : BusinessUseCase {
+interface AccountInfoUseCase : BusinessMVIUseCase {
 
     /**
      * 所有账户
@@ -63,7 +63,7 @@ interface AccountInfoUseCase : BusinessUseCase {
 @ViewModelLayer
 class AccountInfoUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), AccountInfoUseCase {
 
@@ -109,7 +109,7 @@ class AccountInfoUseCaseImpl(
                 .reduceOrNull { acc, fl -> acc + fl } ?: MoneyYuan()
         }
 
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     @IntentProcess
     private suspend fun submit(intent: AccountInfoIntent.Submit) {
         // TODO

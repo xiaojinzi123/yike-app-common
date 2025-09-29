@@ -7,8 +7,8 @@ import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.component.support.ParameterSupport
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -57,7 +57,7 @@ sealed class CategorySelectIntent {
 }
 
 @ViewModelLayer
-interface CategorySelectUseCase : BusinessUseCase {
+interface CategorySelectUseCase : BusinessMVIUseCase {
 
     /**
      * 账本 Id
@@ -135,7 +135,7 @@ interface CategorySelectUseCase : BusinessUseCase {
 @ViewModelLayer
 class CategorySelectUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), CategorySelectUseCase {
 

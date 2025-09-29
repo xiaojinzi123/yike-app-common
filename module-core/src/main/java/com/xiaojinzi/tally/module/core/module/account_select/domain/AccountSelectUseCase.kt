@@ -1,8 +1,8 @@
 package com.xiaojinzi.tally.module.core.module.account_select.domain
 
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -24,7 +24,7 @@ sealed class AccountSelectIntent {
 }
 
 @ViewModelLayer
-interface AccountSelectUseCase : BusinessUseCase {
+interface AccountSelectUseCase : BusinessMVIUseCase {
 
     /**
      * 账本 Id
@@ -37,7 +37,7 @@ interface AccountSelectUseCase : BusinessUseCase {
 @ViewModelLayer
 class AccountSelectUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), AccountSelectUseCase {
 
@@ -54,7 +54,7 @@ class AccountSelectUseCaseImpl(
         )
     }
 
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     @IntentProcess
     private suspend fun submit(intent: AccountSelectIntent.Submit) {
         // TODO

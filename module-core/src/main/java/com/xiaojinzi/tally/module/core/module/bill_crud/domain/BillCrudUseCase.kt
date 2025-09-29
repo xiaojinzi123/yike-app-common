@@ -5,8 +5,8 @@ import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.component.support.ParameterSupport
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.ViewModelLayer
@@ -138,7 +138,7 @@ sealed class BillCrudIntent {
 }
 
 @ViewModelLayer
-interface BillCrudUseCase : BusinessUseCase {
+interface BillCrudUseCase : BusinessMVIUseCase {
 
     companion object {
         val TAG = BillCrudUseCase::class.java.simpleName
@@ -277,7 +277,7 @@ class BillCrudUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
     override val costUseCase: CostUseCaseSpi = CostUseCaseSpiImpl(),
     override val categorySelectUseCase: CategorySelectUseCase = CategorySelectUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BillCrudUseCase {
 

@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.annotation.UiContext
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.ViewModelLayer
@@ -38,14 +38,14 @@ sealed class ThemeSelectIntent {
  * https://zhuanlan.zhihu.com/p/551176430
  */
 @ViewModelLayer
-interface ThemeSelectUseCase : BusinessUseCase {
+interface ThemeSelectUseCase : BusinessMVIUseCase {
     // TODO
 }
 
 @ViewModelLayer
 class ThemeSelectUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), ThemeSelectUseCase {
 
@@ -55,7 +55,7 @@ class ThemeSelectUseCaseImpl(
     }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun themeColorSet(intent: ThemeSelectIntent.ThemeColorSet) {
         if (intent.isNeedVip) {
             val isVip = AppServices.userSpi.isVipStateOb.first()

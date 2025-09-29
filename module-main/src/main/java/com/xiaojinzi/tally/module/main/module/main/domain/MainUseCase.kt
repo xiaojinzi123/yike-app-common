@@ -3,8 +3,8 @@ package com.xiaojinzi.tally.module.main.module.main.domain
 import androidx.annotation.DrawableRes
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.activity_stack.ActivityStack
@@ -75,7 +75,7 @@ sealed class MainIntent {
 }
 
 @ViewModelLayer
-interface MainUseCase : BusinessUseCase {
+interface MainUseCase : BusinessMVIUseCase {
 
     /**
      * tab list
@@ -94,7 +94,7 @@ interface MainUseCase : BusinessUseCase {
 @ViewModelLayer
 class MainUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), MainUseCase {
 

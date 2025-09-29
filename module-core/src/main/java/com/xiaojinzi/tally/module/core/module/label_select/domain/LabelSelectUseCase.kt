@@ -1,8 +1,8 @@
 package com.xiaojinzi.tally.module.core.module.label_select.domain
 
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -36,7 +36,7 @@ sealed class LabelSelectIntent {
 }
 
 @ViewModelLayer
-interface LabelSelectUseCase : BusinessUseCase {
+interface LabelSelectUseCase : BusinessMVIUseCase {
 
     /**
      * 账本 Id
@@ -61,7 +61,7 @@ interface LabelSelectUseCase : BusinessUseCase {
 @ViewModelLayer
 class LabelSelectUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), LabelSelectUseCase {
 

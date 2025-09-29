@@ -6,8 +6,8 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -53,7 +53,7 @@ sealed class AccountCrudIntent {
 }
 
 @ViewModelLayer
-interface AccountCrudUseCase : BusinessUseCase {
+interface AccountCrudUseCase : BusinessMVIUseCase {
 
     companion object {
         const val FLAG = "AccountCrudUseCase"
@@ -136,7 +136,7 @@ interface AccountCrudUseCase : BusinessUseCase {
 @ViewModelLayer
 class AccountCrudUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), AccountCrudUseCase {
 

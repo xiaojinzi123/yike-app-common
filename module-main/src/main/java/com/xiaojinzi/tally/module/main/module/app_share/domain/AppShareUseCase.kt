@@ -6,8 +6,8 @@ import com.xiaojinzi.lib.common.res.share.ShareInfoDto
 import com.xiaojinzi.lib.common.res.share.ShareType
 import com.xiaojinzi.module.common.base.spi.ShareSpi
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.ViewModelLayer
@@ -27,14 +27,14 @@ sealed class AppShareIntent {
 }
 
 @ViewModelLayer
-interface AppShareUseCase : BusinessUseCase {
+interface AppShareUseCase : BusinessMVIUseCase {
     // TODO
 }
 
 @ViewModelLayer
 class AppShareUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), AppShareUseCase {
 

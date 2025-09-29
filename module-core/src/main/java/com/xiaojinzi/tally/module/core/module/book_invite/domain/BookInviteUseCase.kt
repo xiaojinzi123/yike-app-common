@@ -2,8 +2,8 @@ package com.xiaojinzi.tally.module.core.module.book_invite.domain
 
 import android.graphics.Bitmap
 import com.xiaojinzi.reactive.anno.IntentProcess
-import com.xiaojinzi.reactive.template.domain.BusinessUseCase
-import com.xiaojinzi.reactive.template.domain.BusinessUseCaseImpl
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
+import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.StateHotObservable
@@ -23,7 +23,7 @@ sealed class BookInviteIntent {
 }
 
 @ViewModelLayer
-interface BookInviteUseCase : BusinessUseCase {
+interface BookInviteUseCase : BusinessMVIUseCase {
 
     /**
      * 账本 Id 的初始化数据
@@ -53,7 +53,7 @@ interface BookInviteUseCase : BusinessUseCase {
 @ViewModelLayer
 class BookInviteUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
-) : BusinessUseCaseImpl(
+) : BusinessMVIUseCaseImpl(
     commonUseCase = commonUseCase,
 ), BookInviteUseCase {
 
@@ -73,7 +73,7 @@ class BookInviteUseCaseImpl(
         }
 
     @IntentProcess
-    @BusinessUseCase.AutoLoading
+    @BusinessMVIUseCase.AutoLoading
     private suspend fun submit(intent: BookInviteIntent.Submit) {
         // TODO
     }
