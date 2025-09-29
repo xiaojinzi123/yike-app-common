@@ -16,4 +16,5 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version libs.versions.kotlin apply false
     id("com.google.devtools.ksp") version libs.versions.ksp apply false
     id("com.google.dagger.hilt.android") version libs.versions.hilt apply false
+    alias(libs.plugins.kotlin.compose) apply false
 }

@@ -31,7 +31,6 @@ class LibPlugin : Plugin<Project> {
         with(project) {
             extensions.configure<LibraryExtension> {
                 buildFeatures {
-                    compose = true
                 }
             }
         }

@@ -44,9 +44,6 @@ fun CommonExtension<*, BuildType, *, *, *, *>.basicConfig(project: Project) {
         targetCompatibility(JavaVersion.VERSION_17)
     }
     project.tasks.withType(KotlinCompile::class.java) {
-        kotlinOptions {
-            jvmTarget = JavaVersion.VERSION_17.toString()
-        }
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.11"

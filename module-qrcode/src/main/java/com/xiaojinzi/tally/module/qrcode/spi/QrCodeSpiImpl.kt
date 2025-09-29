@@ -21,6 +21,7 @@ import io.github.g00fy2.quickie.QRResult
 import io.github.g00fy2.quickie.ScanQRCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.core.graphics.createBitmap
 
 @RouterAnno(
     hostAndPath = "qrcode/scan",
@@ -69,10 +70,7 @@ class QrCodeSpiImpl : QrCodeSpi {
                     }
                 }
             }
-            Bitmap.createBitmap(
-                width, height,
-                Bitmap.Config.ARGB_8888,
-            ).apply {
+            createBitmap(width, height).apply {
                 setPixels(pixels, 0, width, 0, 0, width, height)
             }
         }

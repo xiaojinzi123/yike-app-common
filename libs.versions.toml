@@ -1,35 +1,33 @@
 [versions]
-compileSdk = "34"
-targetSdk = "34"
-minSdk = "21"
-xiaojinzi_android_support = "v1.0-beta224"
-xiaojinzi_android_module = "v1.0-beta50"
-# xiaojinzi_android_module = "1a1a77bb69"
-# xiaojinzi_android_reactive = "v1.0.0-rc1"
-xiaojinzi_android_reactive = "d21ecebff9"
-compose = "1.7.3"
-lifecycle = "2.8.6"
-lottie = "6.5.2"
-kcomponent = "v1.0.8-rc7"
-kotlin = "1.9.23"
-ksp = "1.9.0-1.0.13"
-agp = "8.5.2"
+agp = "8.11.0"
+compileSdk = "36"
+targetSdk = "35"
+minSdk = "26"
+xiaojinzi_android_support = "v1.0-beta228"
+xiaojinzi_android_module = "v1.0-beta55"
+xiaojinzi_android_reactive = "v1.0.4"
+compose = "1.9.2"
+lifecycle = "2.9.4"
+lottie = "6.6.9"
+kcomponent = "v2.2"
+kotlin = "2.2.10"
+ksp = "2.2.10-2.0.2"
 junit = "4.13.2"
-androidx-test-ext-junit = "1.2.1"
-espresso-core = "3.6.1"
-material = "1.12.0"
-retrofit = "2.11.0"
-room = "2.6.1"
-hilt = "2.51.1"
-glance = "1.1.0"
-work_manager = "2.9.1"
-koin = "3.5.6"
+androidx-test-ext-junit = "1.3.0"
+espresso-core = "3.7.0"
+material = "1.13.0"
+retrofit = "3.0.0"
+room = "2.8.1"
+hilt = "2.57.2"
+glance = "1.1.1"
+work_manager = "2.10.5"
+koin = "4.1.1"
 
 [libraries]
 kotlin_parcelize_runtime = { group = "org.jetbrains.kotlin", name = "kotlin-parcelize-runtime", version.ref = "kotlin" }
-androidx_annotation = { group = "androidx.annotation", name = "annotation", version = "1.8.2" }
-androidx_core = { group = "androidx.core", name = "core-ktx", version = "1.13.1" }
-androidx_appcompat = { group = "androidx.appcompat", name = "appcompat", version = "1.7.0" }
+androidx_annotation = { group = "androidx.annotation", name = "annotation", version = "1.9.1" }
+androidx_core = { group = "androidx.core", name = "core-ktx", version = "1.17.0" }
+androidx_appcompat = { group = "androidx.appcompat", name = "appcompat", version = "1.7.1" }
 androidx_work_manager_ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work_manager" }
 xiaojinzi_android_support_ktx = { group = "com.github.xiaojinzi123.AndroidSupport", name = "lib-ktx", version.ref = "xiaojinzi_android_support" }
 xiaojinzi_android_support_ktx_retrofit = { group = "com.github.xiaojinzi123.AndroidSupport", name = "lib-ktx-retrofit", version.ref = "xiaojinzi_android_support" }
@@ -52,7 +50,7 @@ compose_ui_android = { group = "androidx.compose.ui", name = "ui-android", versi
 compose_foundation_android = { group = "androidx.compose.foundation", name = "foundation-android", version.ref = "compose" }
 compose_foundation_layout_android = { group = "androidx.compose.foundation", name = "foundation-layout-android", version.ref = "compose" }
 compose_material_android = { group = "androidx.compose.material", name = "material-android", version.ref = "compose" }
-compose_material3 = { group = "androidx.compose.material3", name = "material3", version = "1.3.0" }
+compose_material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0" }
 glance_appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 glance_material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
 room_runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
@@ -84,4 +82,5 @@ koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = 
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

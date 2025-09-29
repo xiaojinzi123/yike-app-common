@@ -14,6 +14,9 @@ open class CompilerConfigPlugin : Plugin<Project> {
                 if (this.findPlugin("com.google.dagger.hilt.android") == null) {
                     apply("com.google.dagger.hilt.android")
                 }
+                if (this.findPlugin("org.jetbrains.kotlin.plugin.compose") == null) {
+                    apply("org.jetbrains.kotlin.plugin.compose")
+                }
             }
             extensions.configure<KaptExtension> {
                 correctErrorTypes = true
