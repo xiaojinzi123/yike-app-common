@@ -21,6 +21,7 @@ import com.xiaojinzi.tally.lib.res.model.exception.CommonBusinessException
 import com.xiaojinzi.tally.lib.res.model.network.AppNetworkException
 import com.xiaojinzi.tally.module.base.ktx.getProcessName
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 
 /**
@@ -133,6 +134,7 @@ abstract class BaseApplication : Application() {
                 .appConfigSpi
                 .isAgreedPrivacyAgreementStateOb
                 .filter { it }
+                .first()
             val latestUserId = AppServices
                 .userSpi
                 .latestUserIdStateOb
