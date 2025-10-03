@@ -558,7 +558,7 @@ fun CommonBillListView(
                                     .combinedClickable(
                                         role = Role.Button,
                                         onLongClick = {
-                                            commonBillListViewUseCase.addIntent(
+                                            commonBillListViewUseCase.commonBillListUseCase.addIntent(
                                                 intent = CommonBillListIntent.PopMenu(
                                                     context = context,
                                                     billId = item.billId,
@@ -566,7 +566,7 @@ fun CommonBillListView(
                                             )
                                         },
                                         onClick = {
-                                            commonBillListViewUseCase.addIntent(
+                                            commonBillListViewUseCase.commonBillListUseCase.addIntent(
                                                 intent = CommonBillListIntent.ToBillDetail(
                                                     context = context,
                                                     billId = item.billId,
@@ -613,7 +613,7 @@ fun CommonBillListView(
                             tag = TAG,
                             content = "logKey = $logKey, 调用了加载更多",
                         )
-                        commonBillListViewUseCase.addIntent(
+                        commonBillListViewUseCase.commonBillListUseCase.addIntent(
                             intent = CommonBillListIntent.LoadMore,
                         )
                     }

@@ -50,12 +50,12 @@ sealed class CommonBillListIntent {
     data object LoadMore : CommonBillListIntent()
 
     data class ToBillDetail(
-        @UiContext val context: Context,
+        @param:UiContext val context: Context,
         val billId: String,
     ) : CommonBillListIntent()
 
     data class PopMenu(
-        @UiContext val context: Context,
+        @param:UiContext val context: Context,
         val billId: String,
     ) : CommonBillListIntent()
 

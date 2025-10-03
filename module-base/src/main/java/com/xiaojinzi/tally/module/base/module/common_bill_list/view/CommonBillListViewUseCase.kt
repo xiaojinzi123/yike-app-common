@@ -1,5 +1,7 @@
 package com.xiaojinzi.tally.module.base.module.common_bill_list.view
 
+import com.xiaojinzi.reactive.domain.BaseUseCase
+import com.xiaojinzi.reactive.domain.BaseUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCase
 import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
@@ -26,7 +28,9 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.absoluteValue
 
-interface CommonBillListViewUseCase : BusinessMVIUseCase {
+interface CommonBillListViewUseCase : BaseUseCase {
+
+    val commonBillListUseCase: CommonBillListUseCase
 
     /**
      * 账单列表的数据
@@ -39,13 +43,11 @@ interface CommonBillListViewUseCase : BusinessMVIUseCase {
 class CommonBillListViewUseCaseImpl(
     private val commonUseCase: CommonUseCase = CommonUseCaseImpl(),
     private val billQueryConditionUseCase: CommonBillQueryConditionUseCase,
-    private val commonBillListUseCase: CommonBillListUseCase = CommonBillListUseCaseImpl(
+    override val commonBillListUseCase: CommonBillListUseCase = CommonBillListUseCaseImpl(
         commonUseCase = commonUseCase,
         commonBillQueryConditionUseCase = billQueryConditionUseCase,
     ),
-) : BusinessMVIUseCaseImpl(
-    commonUseCase = commonUseCase,
-), CommonBillListViewUseCase {
+) : BaseUseCaseImpl(), CommonBillListViewUseCase {
 
     @StateHotObservable
     override val billListStateObVo = commonBillListUseCase
