@@ -385,6 +385,16 @@ interface TallyDataSourceSpi {
     ): Flow<MoneyFen>
 
     /**
+     * 订阅某账本某月（yyyy-MM）的总预算，未设置时为 0
+     *
+     * 数据来自 budget 表（钱迹口径：flag=1 总预算，typeInfo=yyyy-MM，单位分）
+     */
+    fun subscribeMonthTotalBudget(
+        bookId: String,
+        typeInfo: String,
+    ): Flow<MoneyFen>
+
+    /**
      * 订阅账单详情
      */
     fun subscribeBillDetailById(

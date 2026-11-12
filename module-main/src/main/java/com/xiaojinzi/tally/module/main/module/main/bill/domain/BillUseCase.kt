@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import java.util.Calendar
+import java.util.Locale
 import kotlin.math.absoluteValue
 
 sealed class BillIntent {
@@ -69,6 +70,12 @@ interface BillUseCase : BusinessMVIUseCase {
      */
     @StateHotObservable
     val currentMonthBalanceStateOb: Flow<MoneyFen>
+
+    /**
+     * 当月预算总额（钱迹口径，yyyy-MM），未设置为 0
+     */
+    @StateHotObservable
+    val currentMonthBudgetStateOb: Flow<MoneyFen>
 
 }
 
@@ -150,6 +157,28 @@ class BillUseCaseImpl(
     ) { spending, income ->
         income - spending
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val currentMonthBudgetStateOb = combine(
+        timeSelectUseCase.selectedYearStateOb,
+        timeSelectUseCase.selectedMonthStateOb,
+        AppServices.tallyDataSourceSpi.selectedBookStateOb,
+    ) { year, month, book ->
+        Triple(year, month, book)
+    }.flatMapLatest { (year, month, book) ->
+        if (book == null) {
+            flowOf(value = MoneyFen())
+        } else {
+            AppServices
+                .tallyDataSourceSpi
+                .subscribeMonthTotalBudget(
+                    bookId = book.id,
+                    typeInfo = String.format(Locale.CHINA, "%04d-%02d", year, month + 1),
+                )
+        }
+    }.sharedStateIn(
+        scope = scope,
+    )
 
     @IntentProcess
     private suspend fun bookSelect(intent: BillIntent.BookSelect) {

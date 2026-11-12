@@ -783,6 +783,24 @@ class TallyDataSourceSpiImpl : TallyDataSourceSpi {
         }
     }
 
+    override fun subscribeMonthTotalBudget(
+        bookId: String,
+        typeInfo: String,
+    ): Flow<MoneyFen> {
+        return TallyDb
+            .database
+            .budgetDao()
+            .subscribeTotal(
+                bookId = bookId,
+                typeInfo = typeInfo,
+            )
+            .map { budget ->
+                MoneyFen(
+                    value = budget?.amount ?: 0L,
+                )
+            }
+    }
+
     override fun subscribeBillDetailById(
         id: String,
     ): Flow<TallyBillDetailDto?> {

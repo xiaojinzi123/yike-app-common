@@ -5,12 +5,14 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -47,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
+import com.xiaojinzi.component.impl.Router
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.template.view.BusinessContentView
 import com.xiaojinzi.support.compose.util.circleClip
@@ -58,6 +61,7 @@ import com.xiaojinzi.tally.lib.res.model.support.DateTimeType
 import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_NORMAL
 import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_SMALL
 import com.xiaojinzi.tally.module.base.module.common_bill_list.view.CommonBillListView
+import com.xiaojinzi.tally.module.base.support.AppRouterConfig
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
 import com.xiaojinzi.tally.module.base.support.AppServices
 import com.xiaojinzi.tally.module.base.usecase.TimeSelectUseCase
@@ -67,6 +71,7 @@ import com.xiaojinzi.tally.module.main.module.main.bill.domain.BillIntent
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlin.math.absoluteValue
 
 @InternalCoroutinesApi
 @ExperimentalMaterial3Api
@@ -96,6 +101,9 @@ fun BillView(
             initial = null
         )
         val currentMonthBalance by vm.currentMonthBalanceStateOb.collectAsState(
+            initial = null
+        )
+        val currentMonthBudget by vm.currentMonthBudgetStateOb.collectAsState(
             initial = null
         )
         AppPullRefreshView(
@@ -244,6 +252,12 @@ fun BillView(
                         .nothing(),
                     state = state,
                 ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .nothing(),
+                    ) {
                     // 当月的支出和收入统计信息
                     ConstraintLayout(
                         modifier = Modifier
@@ -477,6 +491,18 @@ fun BillView(
                             textAlign = TextAlign.Start,
                         )
                     }
+
+                    // 预算进度（钱迹口径：yyyy-MM 总预算）
+                    BudgetProgressLine(
+                        budgetFen = currentMonthBudget?.value ?: 0L,
+                        spendingFen = currentMonthSpending?.value?.absoluteValue ?: 0L,
+                        onSetBudget = {
+                            Router.with(context = context)
+                                .hostAndPath(hostAndPath = AppRouterConfig.QIANJI_BUDGET)
+                                .forward()
+                        },
+                    )
+                    }
                 }
                 CommonBillListView(
                     modifier = Modifier
@@ -486,6 +512,112 @@ fun BillView(
                     commonBillListViewUseCase = vm.commonBillListViewUseCase,
                 )
             }
+        }
+    }
+}
+
+/**
+ * 首页预算进度：未设置时给一个入口，设置后显示进度和剩余/超支
+ */
+@Composable
+private fun BudgetProgressLine(
+    budgetFen: Long,
+    spendingFen: Long,
+    onSetBudget: () -> Unit,
+) {
+    if (budgetFen <= 0L) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickableNoRipple { onSetBudget() }
+                .padding(
+                    start = APP_PADDING_NORMAL.dp,
+                    end = APP_PADDING_NORMAL.dp,
+                    bottom = APP_PADDING_NORMAL.dp,
+                )
+                .nothing(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                modifier = Modifier.nothing(),
+                text = "本月未设预算 · 去设置",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                ),
+                textAlign = TextAlign.Start,
+            )
+        }
+        return
+    }
+
+    val over = spendingFen > budgetFen
+    val ratio = (spendingFen.toFloat() / budgetFen.toFloat()).coerceIn(0f, 1f)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickableNoRipple { onSetBudget() }
+            .padding(
+                start = APP_PADDING_NORMAL.dp,
+                end = APP_PADDING_NORMAL.dp,
+                bottom = APP_PADDING_NORMAL.dp,
+            )
+            .nothing(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .nothing(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                modifier = Modifier.nothing(),
+                text = "预算 ¥${(budgetFen / 100f).format2f()}",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                ),
+                textAlign = TextAlign.Start,
+            )
+            Text(
+                modifier = Modifier.nothing(),
+                text = if (over) {
+                    "超支 ¥${((spendingFen - budgetFen) / 100f).format2f()}"
+                } else {
+                    "剩余 ¥${((budgetFen - spendingFen) / 100f).format2f()}"
+                },
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color = if (over) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    },
+                ),
+                textAlign = TextAlign.End,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 6.dp)
+                .height(6.dp)
+                .clip(MaterialTheme.shapes.extraSmall)
+                .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f))
+                .nothing(),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(ratio)
+                    .fillMaxHeight()
+                    .background(
+                        color = if (over) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                    )
+                    .nothing(),
+            )
         }
     }
 }
