@@ -188,26 +188,50 @@ fun BillView(
                         ),
                         textAlign = TextAlign.Start,
                     )
-                    IconButton(
+                    Row(
                         modifier = Modifier
                             .align(alignment = Alignment.CenterEnd)
+                            .wrapContentSize()
                             .nothing(),
-                        onClick = {
-                            AppRouterCoreApi::class
-                                .routeApi()
-                                .toBillSearchView(
-                                    context = context,
-                                )
-                        },
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(
-                            modifier = Modifier
-                                .size(size = 18.dp)
-                                .nothing(),
-                            painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_search1),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
+                        // 钱迹工具快捷入口（导入 / 预算 / 自动记账）
+                        IconButton(
+                            modifier = Modifier.nothing(),
+                            onClick = {
+                                Router.with(context = context)
+                                    .hostAndPath(hostAndPath = AppRouterConfig.QIANJI_TOOLS)
+                                    .forward()
+                            },
+                        ) {
+                            Icon(
+                                modifier = Modifier
+                                    .size(size = 18.dp)
+                                    .nothing(),
+                                painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_setting1),
+                                contentDescription = "钱迹工具",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        IconButton(
+                            modifier = Modifier.nothing(),
+                            onClick = {
+                                AppRouterCoreApi::class
+                                    .routeApi()
+                                    .toBillSearchView(
+                                        context = context,
+                                    )
+                            },
+                        ) {
+                            Icon(
+                                modifier = Modifier
+                                    .size(size = 18.dp)
+                                    .nothing(),
+                                painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_search1),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
                     }
                 }
                 val initPageIndex = Int.MAX_VALUE / 2
