@@ -25,3 +25,32 @@ class Migration2to3 : Migration(
     }
 
 }
+
+/** 3 -> 4：新增钱迹预算表 */
+class Migration3to4 : Migration(
+    startVersion = 3,
+    endVersion = 4,
+) {
+
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            sql = "CREATE TABLE IF NOT EXISTS `budget` (" +
+                    "`id` TEXT NOT NULL, " +
+                    "`userId` TEXT NOT NULL, " +
+                    "`bookId` TEXT NOT NULL, " +
+                    "`flag` INTEGER NOT NULL, " +
+                    "`categoryId` TEXT, " +
+                    "`typeInfo` TEXT NOT NULL, " +
+                    "`amount` INTEGER NOT NULL, " +
+                    "`timeCreate` INTEGER NOT NULL, " +
+                    "`timeModify` INTEGER NOT NULL, " +
+                    "`isDeleted` INTEGER NOT NULL, " +
+                    "`isSync` INTEGER NOT NULL, " +
+                    "PRIMARY KEY(`id`))"
+        )
+        db.execSQL(
+            sql = "CREATE INDEX IF NOT EXISTS `index_budget_bookId_typeInfo` ON `budget` (`bookId`, `typeInfo`)"
+        )
+    }
+
+}

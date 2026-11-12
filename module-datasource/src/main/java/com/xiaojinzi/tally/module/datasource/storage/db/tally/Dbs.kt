@@ -12,6 +12,7 @@ import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BillDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BillImageDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BillLabelDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BookDao
+import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BudgetDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.CategoryDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.LabelDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.UserInfoCacheDao
@@ -44,6 +45,7 @@ object TallyDb {
         BillImageDao.TableName,
         BillLabelDao.TableName,
         BillChatDao.TableName,
+        BudgetDao.TableName,
     )
 
     // 使用的之前会被初始化
@@ -104,6 +106,7 @@ object TallyDb {
             .addMigrations(
                 Migration1to2(),
                 Migration2to3(),
+                Migration3to4(),
             )
             .build()
     }

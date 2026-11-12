@@ -17,12 +17,18 @@ dependencyResolutionManagement {
     }
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+        // 国内网络优先走阿里云镜像：直连 Maven Central 下载几十 MB 的 jar 会长时间卡住
+        maven {
+            url = uri("https://maven.aliyun.com/repository/google")
+        }
+        maven {
+            url = uri("https://maven.aliyun.com/repository/public")
+        }
+        maven {
+            url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+        }
         google()
         mavenCentral()
-        // 添加阿里的镜像 Maven
-        maven {
-            url = uri("https://maven.aliyun.com/nexus/content/groups/public/")
-        }
         maven {
             url = uri("https://jitpack.io")
         }
@@ -53,6 +59,7 @@ if (hasProductFolder) {
 include(":module-base")
 include(":module-image-preview")
 include(":module-widget")
+include(":module-qianji")
 include(":lib-res")
 
 project(":app:opensource").apply {

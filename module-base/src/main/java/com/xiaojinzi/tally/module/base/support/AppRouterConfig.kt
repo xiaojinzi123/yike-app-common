@@ -78,4 +78,8 @@ object AppRouterConfig {
     private const val HOST_TEST = "test"
     const val TEST_TEST1 = "$HOST_TEST/test1"
 
+    private const val HOST_QIANJI = "qianji"
+    const val QIANJI_TOOLS = "$HOST_QIANJI/tools"
+    const val QIANJI_BUDGET = "$HOST_QIANJI/budget"
+
 }

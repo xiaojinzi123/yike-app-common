@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.xiaojinzi.component.impl.Router
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.template.view.BusinessContentView
 import com.xiaojinzi.support.bean.StringItemDto
@@ -52,6 +53,7 @@ import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_SMALL
 import com.xiaojinzi.tally.lib.res.ui.AppBackgroundColor
 import com.xiaojinzi.tally.lib.res.ui.AppHeightSpace
 import com.xiaojinzi.tally.lib.res.ui.AppWidthSpace
+import com.xiaojinzi.tally.module.base.support.AppRouterConfig
 import com.xiaojinzi.tally.module.base.support.AppRouterUserApi
 import com.xiaojinzi.tally.module.base.support.AppServices
 import com.xiaojinzi.tally.module.base.view.compose.AppbarNormalM3
@@ -285,6 +287,14 @@ private fun SettingView(
                     .wrapContentHeight()
                     .nothing(),
             ) {
+                SettingActionView1(
+                    image = com.xiaojinzi.tally.lib.res.R.drawable.res_tip1.toLocalImageItemDto(),
+                    title = "钱迹工具".toStringItemDto(),
+                ) {
+                    Router.with(context = context)
+                        .hostAndPath(hostAndPath = AppRouterConfig.QIANJI_TOOLS)
+                        .forward()
+                }
                 SettingActionView1(
                     image = com.xiaojinzi.tally.lib.res.R.drawable.res_update1.toLocalImageItemDto(),
                     title = "检查更新".toStringItemDto(),

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!-- 钱迹工具页：数据库导入 / 文件导入 / 无障碍入口 -->
+        <activity
+            android:name=".QianjiToolsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustNothing" />
+
+        <!-- 预算页：总预算 + 分类预算（按月） -->
+        <activity
+            android:name=".BudgetActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 自动记账确认页：无障碍服务抓到支付信号后弹出 -->
+        <activity
+            android:name=".QianjiConfirmActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
+
+        <!-- 钱迹式无障碍自动记账：系统绑定，必须 exported=true -->
+        <service
+            android:name=".QianjiAutoRecordService"
+            android:exported="true"
+            android:label="钱迹自动记账"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/qianji_accessibility_config" />
+        </service>
+
+    </application>
+
+</manifest>

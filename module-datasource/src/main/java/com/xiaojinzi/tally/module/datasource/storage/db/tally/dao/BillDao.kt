@@ -151,6 +151,27 @@ interface BillDao {
     ): List<BillDo>
 
     /**
+     * 某时间段的支出合计（金额为负，返回负数），用于预算统计
+     */
+    @Query(value = "select coalesce(sum(amount), 0) from $TableName where bookId = :bookId and isDeleted = 0 and amount < 0 and time >= :start and time < :end")
+    suspend fun sumExpense(
+        bookId: String,
+        start: Long,
+        end: Long,
+    ): Long
+
+    /**
+     * 某时间段、某分类的支出合计（返回负数），用于分类预算
+     */
+    @Query(value = "select coalesce(sum(amount), 0) from $TableName where bookId = :bookId and categoryId = :categoryId and isDeleted = 0 and amount < 0 and time >= :start and time < :end")
+    suspend fun sumExpenseByCategory(
+        bookId: String,
+        categoryId: String,
+        start: Long,
+        end: Long,
+    ): Long
+
+    /**
      * 插入数据
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
