@@ -5,11 +5,14 @@ import android.database.sqlite.SQLiteDatabase
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.TallyDb
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BillDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BookDo
+import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BudgetDao
+import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BudgetDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.CategoryDo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
+import kotlin.math.abs
 import kotlin.math.roundToLong
 
 /**
@@ -18,6 +21,10 @@ import kotlin.math.roundToLong
  * 不依赖钱迹 apk/dex，只依赖：
  * 1) 钱迹原 SQLite 文件 qianjiapp（greenDAO 表结构）
  * 2) yike 自己的 Room TallyDatabase
+ *
+ * 数据落点固定为 yike 的默认账本（id = 1）：
+ * - 不覆盖账本自身的名称/图标（只在账本不存在时创建）
+ * - 钱迹分类按名字对齐 yike 分类，缺失的按原名新建，不塞种子分类
  */
 object QianjiBridge {
 
@@ -25,114 +32,217 @@ object QianjiBridge {
     const val DEFAULT_BOOK_ID = "1"
     const val DEFAULT_CATEGORY_ID = "qj_other"
 
-    /** 从本机钱迹 data 目录或指定文件导入 */
+    private const val DEFAULT_BOOK_NAME = "默认账本"
+
+    /** 从本机钱迹 data 目录或指定文件导入（幂等：重复导入按 id 覆盖） */
     suspend fun importQianjiDatabase(
         context: Context,
         source: File,
-    ): Int = withContext(Dispatchers.IO) {
+    ): ImportResult = withContext(Dispatchers.IO) {
         require(source.exists() && source.length() > 0) { "钱迹数据库不存在或为空: $source" }
         val db = SQLiteDatabase.openDatabase(source.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
-        val rows = mutableListOf<BillDo>()
         val now = System.currentTimeMillis()
+        var billCount = 0
+        var budgetCount = 0
         db.use { qdb ->
-            ensureBaseData(now)
-            val categoryMap = TallyDb.database.categoryDao()
-                .getByBookId(DEFAULT_BOOK_ID)
-                .associateBy { it.name.orEmpty() }
-            val fallback = categoryMap.values.firstOrNull { it.type == "spending" }?.id
-                ?: DEFAULT_CATEGORY_ID
+            ensureBook(now)
+            val categoryCache = mutableMapOf<String, String>()
+            val bills = mutableListOf<BillDo>()
 
+            // 先收原始行，游标关掉之后再走 suspend 的分类解析
+            data class RawBill(
+                val id: Long,
+                val timeMs: Long,
+                val income: Boolean,
+                val amountCent: Long,
+                val categoryName: String,
+                val note: String?,
+            )
+
+            val rawBills = mutableListOf<RawBill>()
             qdb.rawQuery(
                 """
-                SELECT billid, TIME, TYPE, MONEY, CATEGORY_ID, REMARK, STATUS, bookid
+                SELECT billid, TIME, TYPE, MONEY, CATEGORY_ID, REMARK, STATUS
                 FROM user_bill
                 """.trimIndent(), null
             )?.use { c ->
                 while (c.moveToNext()) {
-                    val status = c.getInt(6)
-                    if (status == 0) continue // 钱迹软删
-                    val rawMoney = c.getDouble(3)
-                    val money = kotlin.math.abs(rawMoney)
-                    val amountCent = (money * 100.0).roundToLong()
+                    if (c.getInt(6) == 0) continue // 钱迹软删
                     val type = c.getInt(2)
-                    val timeSec = c.getLong(1)
-                    val timeMs = timeSec * 1000L
-                    val qjCateId = c.getLong(4)
-                    val categoryName = queryQianjiCategoryName(qdb, qjCateId)
-                    val categoryId = categoryMap[categoryName]?.id ?: fallback
-                    val billId = c.getLong(0)
-                    val note = c.getString(5).orEmpty().ifBlank { null }
-                    rows += BillDo(
-                        id = "qj_$billId",
-                        userId = LOCAL_USER_ID,
-                        bookId = DEFAULT_BOOK_ID,
-                        type = "normal",
-                        originBillId = null,
-                        time = timeMs,
-                        categoryId = categoryId,
-                        accountId = null,
-                        transferTargetAccountId = null,
-                        amount = if (type == 1) amountCent else -amountCent,
-                        note = note,
-                        isNotCalculate = false,
-                        timeCreate = now,
-                        timeModify = timeMs,
-                        isDeleted = false,
-                        isSync = false,
+                    rawBills += RawBill(
+                        id = c.getLong(0),
+                        // 钱迹 TIME 是秒；兼容已经存成毫秒的备份
+                        timeMs = c.getLong(1).let { if (it > 100_000_000_000L) it else it * 1000L },
+                        income = type == 1,
+                        amountCent = (abs(c.getDouble(3)) * 100.0).roundToLong(),
+                        categoryName = queryCategoryName(qdb, c.getLong(4)),
+                        note = c.getString(5).orEmpty().ifBlank { null },
                     )
                 }
             }
+
+            rawBills.forEach { raw ->
+                val categoryId = resolveCategory(
+                    name = raw.categoryName.ifBlank { "其他" },
+                    income = raw.income,
+                    now = now,
+                    cache = categoryCache,
+                )
+                bills += BillDo(
+                    id = "qj_${raw.id}",
+                    userId = LOCAL_USER_ID,
+                    bookId = DEFAULT_BOOK_ID,
+                    type = "normal",
+                    originBillId = null,
+                    time = raw.timeMs,
+                    categoryId = categoryId,
+                    accountId = null,
+                    transferTargetAccountId = null,
+                    amount = if (raw.income) raw.amountCent else -raw.amountCent,
+                    note = raw.note,
+                    isNotCalculate = false,
+                    timeCreate = now,
+                    timeModify = now,
+                    isDeleted = false,
+                    isSync = false,
+                )
+            }
+            if (bills.isNotEmpty()) TallyDb.database.billDao().insert(bills)
+            billCount = bills.size
+
+            budgetCount = importBudgets(qdb, now)
         }
-        if (rows.isNotEmpty()) TallyDb.database.billDao().insert(rows)
-        rows.size
+        ImportResult(billCount = billCount, budgetCount = budgetCount)
     }
 
-    private suspend fun ensureBaseData(now: Long) {
-        val dao = TallyDb.database
-        dao.bookDao().insert(
+    data class ImportResult(
+        val billCount: Int,
+        val budgetCount: Int,
+    )
+
+    /** 只在账本不存在时创建，绝不覆盖现有账本 */
+    private suspend fun ensureBook(now: Long) {
+        val bookDao = TallyDb.database.bookDao()
+        if (bookDao.getById(DEFAULT_BOOK_ID) != null) return
+        bookDao.insert(
             BookDo(
                 id = DEFAULT_BOOK_ID,
                 userId = LOCAL_USER_ID,
                 isSystem = true,
                 type = "normal",
-                name = "钱迹导入账本",
+                name = DEFAULT_BOOK_NAME,
                 iconName = "book1",
                 timeCreate = now,
                 timeModify = now,
             )
         )
-        val categoryDao = dao.categoryDao()
-        val exists = categoryDao.getByBookId(DEFAULT_BOOK_ID).any { it.id == DEFAULT_CATEGORY_ID }
-        if (!exists) {
-            categoryDao.insert(
-                listOf(
-                    category("qj_food", "餐饮", "spending", 0, now),
-                    category("qj_transport", "交通", "spending", 1, now),
-                    category("qj_shopping", "购物", "spending", 2, now),
-                    category("qj_daily", "日用", "spending", 3, now),
-                    category("qj_other", "其他", "spending", 99, now),
-                    category("qj_salary", "工资", "income", 100, now),
-                )
-            )
-        }
     }
 
-    private fun category(id: String, name: String, type: String, sort: Int, now: Long) = CategoryDo(
-        id = id,
-        userId = LOCAL_USER_ID,
-        bookId = DEFAULT_BOOK_ID,
-        parentId = null,
-        type = type,
-        name = name,
-        iconName = null,
-        sort = sort.toLong(),
-        timeCreate = now,
-        timeModify = now,
-        isDeleted = false,
-        isSync = false,
-    )
+    /** 按名字对齐 yike 已有分类；没有就按钱迹原名新建（保留分类语义） */
+    private suspend fun resolveCategory(
+        name: String,
+        income: Boolean,
+        now: Long,
+        cache: MutableMap<String, String>,
+    ): String {
+        val type = if (income) "income" else "spending"
+        val key = "$type:$name"
+        cache[key]?.let { return it }
 
-    private fun queryQianjiCategoryName(qdb: SQLiteDatabase, id: Long): String {
+        val dao = TallyDb.database.categoryDao()
+        val existing = dao.getByBookId(DEFAULT_BOOK_ID)
+            .firstOrNull { it.name == name && it.type == type }
+            ?: dao.getByBookId(DEFAULT_BOOK_ID).firstOrNull { it.name == name }
+        if (existing != null) {
+            cache[key] = existing.id
+            return existing.id
+        }
+
+        val id = "qjc_" + UUID.randomUUID().toString()
+        dao.insert(
+            CategoryDo(
+                id = id,
+                userId = LOCAL_USER_ID,
+                bookId = DEFAULT_BOOK_ID,
+                parentId = null,
+                type = type,
+                name = name,
+                iconName = null,
+                sort = 9000L,
+                timeCreate = now,
+                timeModify = now,
+                isDeleted = false,
+                isSync = false,
+            )
+        )
+        cache[key] = id
+        return id
+    }
+
+    /**
+     * 钱迹预算：user_budget 的 TYPE=1 表示按月，TYPE_INFO=yyyy-MM，
+     * FLAG=1 总预算 / 2 分类预算，MONEY 单位为元。
+     */
+    private suspend fun importBudgets(qdb: SQLiteDatabase, now: Long): Int {
+        data class RawBudget(
+            val typeInfo: String,
+            val flag: Int,
+            val amountCents: Long,
+            val categoryName: String?,
+        )
+
+        val rows = mutableListOf<RawBudget>()
+        qdb.rawQuery(
+            "SELECT TYPE, TYPE_INFO, FLAG, CATEGORY_ID, MONEY FROM user_budget",
+            null,
+        )?.use { c ->
+            while (c.moveToNext()) {
+                if (c.getInt(0) != 1) continue // 只取按月预算
+                val typeInfo = c.getString(1).orEmpty()
+                if (!typeInfo.matches(Regex("\\d{4}-\\d{2}"))) continue
+                val money = c.getDouble(4)
+                if (money <= 0) continue
+                val flag = c.getInt(2)
+                val categoryName = if (flag == BudgetDao.FLAG_CATEGORY && !c.isNull(3)) {
+                    queryCategoryName(qdb, c.getLong(3))
+                } else null
+                rows += RawBudget(
+                    typeInfo = typeInfo,
+                    flag = flag,
+                    amountCents = (money * 100.0).roundToLong(),
+                    categoryName = categoryName,
+                )
+            }
+        }
+        if (rows.isEmpty()) return 0
+
+        val cache = mutableMapOf<String, String>()
+        val budgets = rows.map { raw ->
+            val categoryId = if (raw.flag == BudgetDao.FLAG_CATEGORY && !raw.categoryName.isNullOrBlank()) {
+                resolveCategory(name = raw.categoryName, income = false, now = now, cache = cache)
+            } else null
+            BudgetDo(
+                id = budgetId(raw.typeInfo, raw.flag, categoryId),
+                userId = LOCAL_USER_ID,
+                bookId = DEFAULT_BOOK_ID,
+                flag = raw.flag,
+                categoryId = categoryId,
+                typeInfo = raw.typeInfo,
+                amount = raw.amountCents,
+                timeCreate = now,
+                timeModify = now,
+            )
+        }
+        TallyDb.database.budgetDao().insert(budgets)
+        return budgets.size
+    }
+
+    /** 与 BudgetActivity 保持一致的确定性 id，重复导入按覆盖处理 */
+    private fun budgetId(typeInfo: String, flag: Int, categoryId: String?): String {
+        return "qjb_${DEFAULT_BOOK_ID}_${typeInfo}_${flag}_${categoryId ?: "total"}"
+    }
+
+    private fun queryCategoryName(qdb: SQLiteDatabase, id: Long): String {
         return qdb.rawQuery("SELECT NAME FROM category WHERE _id = ?", arrayOf(id.toString()))?.use { c ->
             if (c.moveToFirst()) c.getString(0).orEmpty() else ""
         }.orEmpty()
@@ -146,13 +256,17 @@ object QianjiBridge {
         note: String?,
         timeMs: Long = System.currentTimeMillis(),
     ): BillDo = withContext(Dispatchers.IO) {
-        ensureBaseData(System.currentTimeMillis())
+        val now = System.currentTimeMillis()
+        ensureBook(now)
+        val type = if (income) "income" else "spending"
         val categoryId = TallyDb.database.categoryDao()
             .getByBookId(DEFAULT_BOOK_ID)
-            .firstOrNull { it.name == categoryName && it.type == if (income) "income" else "spending" }
-            ?.id
-            ?: DEFAULT_CATEGORY_ID
-        val amount = (kotlin.math.abs(amountYuan) * 100.0).roundToLong()
+            .let { list ->
+                list.firstOrNull { it.name == categoryName && it.type == type }?.id
+                    ?: list.firstOrNull { it.type == type }?.id
+            }
+            ?: resolveCategory(name = categoryName ?: "其他", income = income, now = now, cache = mutableMapOf())
+        val amount = (abs(amountYuan) * 100.0).roundToLong()
         val bill = BillDo(
             id = "qj_" + UUID.randomUUID().toString(),
             userId = LOCAL_USER_ID,
@@ -166,8 +280,8 @@ object QianjiBridge {
             amount = if (income) amount else -amount,
             note = note,
             isNotCalculate = false,
-            timeCreate = System.currentTimeMillis(),
-            timeModify = System.currentTimeMillis(),
+            timeCreate = now,
+            timeModify = now,
             isDeleted = false,
             isSync = false,
         )
