@@ -3,6 +3,7 @@ package com.xiaojinzi.tally.module.qianji
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.TallyDb
+import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.AccountDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BillDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BookDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BudgetDao
@@ -46,6 +47,7 @@ object QianjiBridge {
         var budgetCount = 0
         db.use { qdb ->
             ensureBook(now)
+            val accountMap = importAccounts(qdb, now)
             val categoryCache = mutableMapOf<String, String>()
             val bills = mutableListOf<BillDo>()
 
@@ -53,16 +55,20 @@ object QianjiBridge {
             data class RawBill(
                 val id: Long,
                 val timeMs: Long,
-                val income: Boolean,
+                // 钱迹 Bill 类型：0 支出 / 1 收入 / 2 转账
+                val type: Int,
                 val amountCent: Long,
                 val categoryName: String,
                 val note: String?,
+                val assetId: Long?,
+                val fromId: Long?,
+                val targetId: Long?,
             )
 
             val rawBills = mutableListOf<RawBill>()
             qdb.rawQuery(
                 """
-                SELECT billid, TIME, TYPE, MONEY, CATEGORY_ID, REMARK, STATUS
+                SELECT billid, TIME, TYPE, MONEY, CATEGORY_ID, REMARK, STATUS, ASSETID, FROMID, TARGETID
                 FROM user_bill
                 """.trimIndent(), null
             )?.use { c ->
@@ -73,32 +79,43 @@ object QianjiBridge {
                         id = c.getLong(0),
                         // 钱迹 TIME 是秒；兼容已经存成毫秒的备份
                         timeMs = c.getLong(1).let { if (it > 100_000_000_000L) it else it * 1000L },
-                        income = type == 1,
+                        type = type,
                         amountCent = (abs(c.getDouble(3)) * 100.0).roundToLong(),
-                        categoryName = queryCategoryName(qdb, c.getLong(4)),
+                        categoryName = if (c.isNull(4)) "" else queryCategoryName(qdb, c.getLong(4)),
                         note = c.getString(5).orEmpty().ifBlank { null },
+                        assetId = if (c.isNull(7)) null else c.getLong(7),
+                        fromId = if (c.isNull(8)) null else c.getLong(8),
+                        targetId = if (c.isNull(9)) null else c.getLong(9),
                     )
                 }
             }
 
             rawBills.forEach { raw ->
-                val categoryId = resolveCategory(
-                    name = raw.categoryName.ifBlank { "其他" },
-                    income = raw.income,
-                    now = now,
-                    cache = categoryCache,
-                )
+                val isTransfer = raw.type == 2
+                val income = raw.type == 1
+                val categoryId = if (isTransfer) {
+                    null
+                } else {
+                    resolveCategory(
+                        name = raw.categoryName.ifBlank { "其他" },
+                        income = income,
+                        now = now,
+                        cache = categoryCache,
+                    )
+                }
                 bills += BillDo(
                     id = "qj_${raw.id}",
                     userId = LOCAL_USER_ID,
                     bookId = DEFAULT_BOOK_ID,
-                    type = "normal",
+                    type = if (isTransfer) "transfer" else "normal",
                     originBillId = null,
                     time = raw.timeMs,
                     categoryId = categoryId,
-                    accountId = null,
-                    transferTargetAccountId = null,
-                    amount = if (raw.income) raw.amountCent else -raw.amountCent,
+                    accountId = raw.assetId?.let { accountMap[it] }
+                        ?: raw.fromId?.let { accountMap[it] },
+                    transferTargetAccountId = if (isTransfer) raw.targetId?.let { accountMap[it] } else null,
+                    // 转账是资金流出源账户，统一记负数
+                    amount = if (isTransfer || !income) -raw.amountCent else raw.amountCent,
                     note = raw.note,
                     isNotCalculate = false,
                     timeCreate = now,
@@ -136,6 +153,64 @@ object QianjiBridge {
                 timeModify = now,
             )
         )
+    }
+
+    /**
+     * 导入钱迹资产为 yike 账户。
+     *
+     * - 钱迹 user_asset.STATUS=0 为有效资产
+     * - 钱迹 MONEY 是当前余额（已包含账单影响），这里 balanceInit 置 0，
+     *   避免和导入的账单重复计算
+     * - 按名字对齐已有账户，没有就用确定性 id `qja_<钱迹id>` 新建
+     */
+    private suspend fun importAccounts(qdb: SQLiteDatabase, now: Long): Map<Long, String> {
+        data class RawAsset(val id: Long, val name: String)
+
+        val assets = mutableListOf<RawAsset>()
+        qdb.rawQuery(
+            "SELECT _ID, NAME FROM user_asset WHERE STATUS = 0",
+            null,
+        )?.use { c ->
+            while (c.moveToNext()) {
+                assets += RawAsset(
+                    id = c.getLong(0),
+                    name = c.getString(1).orEmpty().ifBlank { "账户${c.getLong(0)}" },
+                )
+            }
+        }
+        if (assets.isEmpty()) return emptyMap()
+
+        val accountDao = TallyDb.database.accountDao()
+        val existing = accountDao
+            .getAll(bookId = DEFAULT_BOOK_ID)
+            .filterNot { it.isDeleted }
+        val map = mutableMapOf<Long, String>()
+        assets.forEachIndexed { index, asset ->
+            val byName = existing.firstOrNull { it.name == asset.name }
+            if (byName != null) {
+                map[asset.id] = byName.id
+            } else {
+                val id = "qja_${asset.id}"
+                accountDao.insert(
+                    AccountDo(
+                        id = id,
+                        userId = LOCAL_USER_ID,
+                        bookId = DEFAULT_BOOK_ID,
+                        iconName = null,
+                        name = asset.name,
+                        balanceInit = 0L,
+                        isExcluded = false,
+                        isDefault = index == 0,
+                        timeCreate = now,
+                        timeModify = now,
+                        isDeleted = false,
+                        isSync = false,
+                    )
+                )
+                map[asset.id] = id
+            }
+        }
+        return map
     }
 
     /** 按名字对齐 yike 已有分类；没有就按钱迹原名新建（保留分类语义） */
