@@ -1,2 +1,7 @@
 /build
 /.gradle
+# 各模块下的构建产物（module-*、lib-res 等）
+build/
+.gradle/
+# 本地 SDK 配置，不随仓库走
+local.properties
