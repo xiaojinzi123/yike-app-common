@@ -70,6 +70,7 @@ object QianjiBridge {
                 val fromId: Long?,
                 val targetId: Long?,
                 val tagIds: List<String>,
+                val refundSourceId: Long?,
             )
 
             val rawBills = mutableListOf<RawBill>()
@@ -94,12 +95,15 @@ object QianjiBridge {
                         fromId = if (c.isNull(8)) null else c.getLong(8),
                         targetId = if (c.isNull(9)) null else c.getLong(9),
                         tagIds = parseExtraTagIds(c.getString(10)),
+                        refundSourceId = parseExtraRefundSource(c.getString(10)),
                     )
                 }
             }
 
             rawBills.forEach { raw ->
                 val isTransfer = raw.type == 2
+                // 钱迹 type=20 是退款账单，refundsid 指向原账单
+                val isRefund = raw.type == 20 && raw.refundSourceId != null
                 val income = raw.type == 1
                 val categoryId = if (isTransfer) {
                     null
@@ -116,15 +120,25 @@ object QianjiBridge {
                     id = billId,
                     userId = LOCAL_USER_ID,
                     bookId = DEFAULT_BOOK_ID,
-                    type = if (isTransfer) "transfer" else "normal",
-                    originBillId = null,
+                    type = when {
+                        isTransfer -> "transfer"
+                        isRefund -> "refund"
+                        else -> "normal"
+                    },
+                    originBillId = if (isRefund) "qj_${raw.refundSourceId}" else null,
                     time = raw.timeMs,
                     categoryId = categoryId,
                     accountId = raw.assetId?.let { accountMap[it] }
                         ?: raw.fromId?.let { accountMap[it] },
                     transferTargetAccountId = if (isTransfer) raw.targetId?.let { accountMap[it] } else null,
-                    // 转账是资金流出源账户，统一记负数
-                    amount = if (isTransfer || !income) -raw.amountCent else raw.amountCent,
+                    amount = when {
+                        // 转账是资金流出源账户，统一记负数
+                        isTransfer -> -raw.amountCent
+                        // 退款在 yike 里记正数
+                        isRefund -> raw.amountCent
+                        !income -> -raw.amountCent
+                        else -> raw.amountCent
+                    },
                     note = raw.note,
                     isNotCalculate = false,
                     timeCreate = now,
@@ -307,6 +321,16 @@ object QianjiBridge {
                 array.optString(index).takeIf { it.isNotBlank() }
             }
         }.getOrDefault(emptyList())
+    }
+
+    /** 钱迹退款账单的原账单 id：user_bill.EXTRA 里的 "refundsid" */
+    private fun parseExtraRefundSource(extra: String?): Long? {
+        if (extra.isNullOrBlank()) return null
+        return runCatching {
+            JSONObject(extra)
+                .optLong("refundsid", 0L)
+                .takeIf { it > 0L }
+        }.getOrNull()
     }
 
     /** 按名字对齐 yike 已有分类；没有就按钱迹原名新建（保留分类语义） */
