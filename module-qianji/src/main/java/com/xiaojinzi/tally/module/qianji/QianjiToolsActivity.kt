@@ -81,6 +81,18 @@ class QianjiToolsActivity : Activity() {
         root.addView(action("启用自动记账", "打开系统无障碍设置，找到「钱迹自动记账」") {
             openAccessibilitySettings()
         })
+        // 调试入口：模拟器上没有真实支付页，直接拉起确认页验证写入链路
+        root.addView(action("模拟自动记账（调试）", "直接打开确认页，验证确认 → 落库") {
+            startActivity(
+                Intent(this@QianjiToolsActivity, QianjiConfirmActivity::class.java).apply {
+                    putExtra(QianjiAutoRecordService.EXTRA_AMOUNT, 12.34)
+                    putExtra(QianjiAutoRecordService.EXTRA_INCOME, false)
+                    putExtra(QianjiAutoRecordService.EXTRA_NOTE, "调试模拟")
+                    putExtra(QianjiAutoRecordService.EXTRA_TIME, System.currentTimeMillis())
+                    putExtra(QianjiAutoRecordService.EXTRA_PACKAGE, "debug")
+                }
+            )
+        })
 
         status = TextView(this).apply {
             text = ""
