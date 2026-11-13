@@ -5,12 +5,15 @@ import android.database.sqlite.SQLiteDatabase
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.TallyDb
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.AccountDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BillDo
+import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BillLabelDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BookDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BudgetDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BudgetDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.CategoryDo
+import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.LabelDo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.io.File
 import java.util.UUID
 import kotlin.math.abs
@@ -45,11 +48,14 @@ object QianjiBridge {
         val now = System.currentTimeMillis()
         var billCount = 0
         var budgetCount = 0
+        var labelLinkCount = 0
         db.use { qdb ->
             ensureBook(now)
             val accountMap = importAccounts(qdb, now)
+            val labelMap = importLabels(qdb, now)
             val categoryCache = mutableMapOf<String, String>()
             val bills = mutableListOf<BillDo>()
+            val billLabels = mutableListOf<BillLabelDo>()
 
             // 先收原始行，游标关掉之后再走 suspend 的分类解析
             data class RawBill(
@@ -63,12 +69,13 @@ object QianjiBridge {
                 val assetId: Long?,
                 val fromId: Long?,
                 val targetId: Long?,
+                val tagIds: List<String>,
             )
 
             val rawBills = mutableListOf<RawBill>()
             qdb.rawQuery(
                 """
-                SELECT billid, TIME, TYPE, MONEY, CATEGORY_ID, REMARK, STATUS, ASSETID, FROMID, TARGETID
+                SELECT billid, TIME, TYPE, MONEY, CATEGORY_ID, REMARK, STATUS, ASSETID, FROMID, TARGETID, EXTRA
                 FROM user_bill
                 """.trimIndent(), null
             )?.use { c ->
@@ -86,6 +93,7 @@ object QianjiBridge {
                         assetId = if (c.isNull(7)) null else c.getLong(7),
                         fromId = if (c.isNull(8)) null else c.getLong(8),
                         targetId = if (c.isNull(9)) null else c.getLong(9),
+                        tagIds = parseExtraTagIds(c.getString(10)),
                     )
                 }
             }
@@ -103,8 +111,9 @@ object QianjiBridge {
                         cache = categoryCache,
                     )
                 }
+                val billId = "qj_${raw.id}"
                 bills += BillDo(
-                    id = "qj_${raw.id}",
+                    id = billId,
                     userId = LOCAL_USER_ID,
                     bookId = DEFAULT_BOOK_ID,
                     type = if (isTransfer) "transfer" else "normal",
@@ -123,18 +132,39 @@ object QianjiBridge {
                     isDeleted = false,
                     isSync = false,
                 )
+                raw.tagIds.forEach { qianjiTagId ->
+                    labelMap[qianjiTagId]?.let { labelId ->
+                        billLabels += BillLabelDo(
+                            id = "qjbl_${raw.id}_$labelId",
+                            userId = LOCAL_USER_ID,
+                            bookId = DEFAULT_BOOK_ID,
+                            billId = billId,
+                            labelId = labelId,
+                            timeModify = now,
+                            isDeleted = false,
+                            isSync = false,
+                        )
+                    }
+                }
             }
             if (bills.isNotEmpty()) TallyDb.database.billDao().insert(bills)
+            if (billLabels.isNotEmpty()) TallyDb.database.billLabelDao().insert(billLabels)
             billCount = bills.size
+            labelLinkCount = billLabels.size
 
             budgetCount = importBudgets(qdb, now)
         }
-        ImportResult(billCount = billCount, budgetCount = budgetCount)
+        ImportResult(
+            billCount = billCount,
+            budgetCount = budgetCount,
+            labelLinkCount = labelLinkCount,
+        )
     }
 
     data class ImportResult(
         val billCount: Int,
         val budgetCount: Int,
+        val labelLinkCount: Int = 0,
     )
 
     /** 只在账本不存在时创建，绝不覆盖现有账本 */
@@ -211,6 +241,72 @@ object QianjiBridge {
             }
         }
         return map
+    }
+
+    /**
+     * 导入钱迹标签。
+     *
+     * - user_tag.STATUS：1 默认 / 2 归档，0 视为无效
+     * - 账单与标签的关联不在独立表，存在 user_bill.EXTRA 的 JSON `"tags": [...]`
+     * - 按名字对齐已有标签，没有就用确定性 id `qjl_<钱迹tagId>` 新建
+     */
+    private suspend fun importLabels(qdb: SQLiteDatabase, now: Long): Map<String, String> {
+        val rows = mutableListOf<Pair<String, String>>() // 钱迹 tagId -> name
+        qdb.rawQuery(
+            "SELECT TAG_ID, NAME, STATUS FROM user_tag",
+            null,
+        )?.use { c ->
+            while (c.moveToNext()) {
+                if (c.getInt(2) == 0) continue
+                val tagId = c.getString(0) ?: continue
+                val name = c.getString(1).orEmpty().ifBlank { tagId }
+                rows += tagId to name
+            }
+        }
+        if (rows.isEmpty()) return emptyMap()
+
+        val labelDao = TallyDb.database.labelDao()
+        val nameToId = labelDao
+            .getAllUnderBook(bookId = DEFAULT_BOOK_ID)
+            .filterNot { it.isDeleted }
+            .associate { it.name.orEmpty() to it.id }
+            .toMutableMap()
+
+        val map = mutableMapOf<String, String>()
+        rows.forEach { (tagId, name) ->
+            val existingId = nameToId[name]
+            if (existingId != null) {
+                map[tagId] = existingId
+            } else {
+                val id = "qjl_$tagId"
+                labelDao.insert(
+                    LabelDo(
+                        id = id,
+                        userId = LOCAL_USER_ID,
+                        bookId = DEFAULT_BOOK_ID,
+                        name = name,
+                        timeCreate = now,
+                        timeModify = now,
+                        isDeleted = false,
+                        isSync = false,
+                    )
+                )
+                nameToId[name] = id
+                map[tagId] = id
+            }
+        }
+        return map
+    }
+
+    /** 钱迹账单标签：user_bill.EXTRA 里的 {"tags": ["id1", "id2"]} */
+    private fun parseExtraTagIds(extra: String?): List<String> {
+        if (extra.isNullOrBlank()) return emptyList()
+        return runCatching {
+            val array = JSONObject(extra).optJSONArray("tags") ?: return emptyList()
+            (0 until array.length()).mapNotNull { index ->
+                array.optString(index).takeIf { it.isNotBlank() }
+            }
+        }.getOrDefault(emptyList())
     }
 
     /** 按名字对齐 yike 已有分类；没有就按钱迹原名新建（保留分类语义） */

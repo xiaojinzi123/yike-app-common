@@ -155,7 +155,10 @@ class QianjiToolsActivity : Activity() {
                 val cached = copyToCache(uri, "qianji_import.db")
                 QianjiBridge.importQianjiDatabase(this@QianjiToolsActivity, cached)
             }.onSuccess { result ->
-                setStatus("导入完成：${result.billCount} 笔账单、${result.budgetCount} 条预算")
+                setStatus(
+                    "导入完成：${result.billCount} 笔账单、" +
+                            "${result.budgetCount} 条预算、${result.labelLinkCount} 条标签关联"
+                )
             }.onFailure { e ->
                 setStatus("导入失败：${e.message}")
             }
