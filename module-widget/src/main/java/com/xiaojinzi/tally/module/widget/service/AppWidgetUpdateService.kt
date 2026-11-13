@@ -20,6 +20,7 @@ import com.xiaojinzi.tally.lib.res.model.tally.TallyTable
 import com.xiaojinzi.tally.module.base.support.AppServices
 import com.xiaojinzi.tally.module.widget.AppDayStatisticsWidget
 import com.xiaojinzi.tally.module.widget.AppMonthStatisticsWidget
+import com.xiaojinzi.tally.module.widget.QianjiBudgetWidget
 import com.xiaojinzi.tally.module.widget.ktx.updateAllWidgetAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,6 +49,7 @@ class AppWidgetUpdateService : Service() {
                 val widgetClassList = listOf(
                     AppDayStatisticsWidget::class.java,
                     AppMonthStatisticsWidget::class.java,
+                    QianjiBudgetWidget::class.java,
                 )
                 val allUsedWidgetIds = widgetClassList.flatMap {
                     manager.getGlanceIds(it)

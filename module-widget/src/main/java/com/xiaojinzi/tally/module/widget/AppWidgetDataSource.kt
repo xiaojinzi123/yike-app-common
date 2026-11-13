@@ -104,4 +104,45 @@ object AppWidgetDataSource {
         isSpending = false,
     )
 
+    /**
+     * 当月预算（钱迹口径），未设置时为 0
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @StateHotObservable
+    val currentMonthBudgetStateOb = AppServices
+        .tallyDataSourceInitSpi
+        .isInitStateOb
+        .flatMapLatest { isDatasourceInit ->
+            if (isDatasourceInit) {
+                AppServices
+                    .tallyDataSourceSpi
+                    .selectedBookStateOb
+                    .flatMapLatest { book ->
+                        book?.let { bookInfo ->
+                            AppServices
+                                .tallyDataSourceSpi
+                                .subscribeMonthTotalBudget(
+                                    bookId = bookInfo.id,
+                                    typeInfo = currentMonthTypeInfo(),
+                                )
+                        } ?: flowOf(value = MoneyFen())
+                    }
+            } else {
+                flowOf(value = null)
+            }
+        }
+        .sharedStateIn(
+            scope = AppScope,
+        )
+
+    private fun currentMonthTypeInfo(): String {
+        val calendar = java.util.Calendar.getInstance()
+        return String.format(
+            java.util.Locale.CHINA,
+            "%04d-%02d",
+            calendar[java.util.Calendar.YEAR],
+            calendar[java.util.Calendar.MONTH] + 1,
+        )
+    }
+
 }
