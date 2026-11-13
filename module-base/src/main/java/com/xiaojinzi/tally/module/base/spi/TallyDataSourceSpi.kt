@@ -92,6 +92,13 @@ interface TallyDataSourceSpi {
             val isDeleted: Boolean? = false,
         ) : Parcelable
 
+        /** 分类预算，金额单位：分 */
+        @Keep
+        data class MonthCategoryBudgetDto(
+            val categoryId: String,
+            val amount: Long,
+        )
+
     }
 
     /**
@@ -393,6 +400,14 @@ interface TallyDataSourceSpi {
         bookId: String,
         typeInfo: String,
     ): Flow<MoneyFen>
+
+    /**
+     * 订阅某账本某月（yyyy-MM）的分类预算列表，未设置时为空列表
+     */
+    fun subscribeMonthCategoryBudgets(
+        bookId: String,
+        typeInfo: String,
+    ): Flow<List<MonthCategoryBudgetDto>>
 
     /**
      * 订阅账单详情

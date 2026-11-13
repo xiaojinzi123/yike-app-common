@@ -72,6 +72,9 @@ interface BudgetDao {
     @Query("SELECT * FROM $TableName WHERE bookId = :bookId AND typeInfo = :typeInfo AND flag = $FLAG_CATEGORY AND isDeleted = 0")
     suspend fun getCategoryBudgets(bookId: String, typeInfo: String): List<BudgetDo>
 
+    @Query("SELECT * FROM $TableName WHERE bookId = :bookId AND typeInfo = :typeInfo AND flag = $FLAG_CATEGORY AND isDeleted = 0")
+    fun subscribeCategoryBudgets(bookId: String, typeInfo: String): kotlinx.coroutines.flow.Flow<List<BudgetDo>>
+
     @Query("DELETE FROM $TableName WHERE id = :id")
     suspend fun deleteById(id: String)
 }

@@ -801,6 +801,29 @@ class TallyDataSourceSpiImpl : TallyDataSourceSpi {
             }
     }
 
+    override fun subscribeMonthCategoryBudgets(
+        bookId: String,
+        typeInfo: String,
+    ): Flow<List<TallyDataSourceSpi.Companion.MonthCategoryBudgetDto>> {
+        return TallyDb
+            .database
+            .budgetDao()
+            .subscribeCategoryBudgets(
+                bookId = bookId,
+                typeInfo = typeInfo,
+            )
+            .map { budgets ->
+                budgets.mapNotNull { budget ->
+                    budget.categoryId?.let { categoryId ->
+                        TallyDataSourceSpi.Companion.MonthCategoryBudgetDto(
+                            categoryId = categoryId,
+                            amount = budget.amount,
+                        )
+                    }
+                }
+            }
+    }
+
     override fun subscribeBillDetailById(
         id: String,
     ): Flow<TallyBillDetailDto?> {

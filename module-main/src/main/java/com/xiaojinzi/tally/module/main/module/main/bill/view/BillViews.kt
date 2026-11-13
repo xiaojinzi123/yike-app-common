@@ -68,6 +68,7 @@ import com.xiaojinzi.tally.module.base.usecase.TimeSelectUseCase
 import com.xiaojinzi.tally.module.base.view.compose.AppPullRefreshView
 import com.xiaojinzi.tally.module.base.view.compose.AppbarNormalM3
 import com.xiaojinzi.tally.module.main.module.main.bill.domain.BillIntent
+import com.xiaojinzi.tally.module.main.module.main.bill.domain.CategoryBudgetProgress
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -104,6 +105,9 @@ fun BillView(
             initial = null
         )
         val currentMonthBudget by vm.currentMonthBudgetStateOb.collectAsState(
+            initial = null
+        )
+        val categoryBudgetProgress by vm.currentMonthCategoryBudgetStateOb.collectAsState(
             initial = null
         )
         AppPullRefreshView(
@@ -520,6 +524,7 @@ fun BillView(
                     BudgetProgressLine(
                         budgetFen = currentMonthBudget?.value ?: 0L,
                         spendingFen = currentMonthSpending?.value?.absoluteValue ?: 0L,
+                        categoryProgress = categoryBudgetProgress.orEmpty(),
                         onSetBudget = {
                             Router.with(context = context)
                                 .hostAndPath(hostAndPath = AppRouterConfig.QIANJI_BUDGET)
@@ -547,8 +552,10 @@ fun BillView(
 private fun BudgetProgressLine(
     budgetFen: Long,
     spendingFen: Long,
+    categoryProgress: List<CategoryBudgetProgress>,
     onSetBudget: () -> Unit,
 ) {
+    val overdueCount = categoryProgress.count { it.isOver }
     if (budgetFen <= 0L) {
         Row(
             modifier = Modifier
@@ -560,6 +567,7 @@ private fun BudgetProgressLine(
                     bottom = APP_PADDING_NORMAL.dp,
                 )
                 .nothing(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -570,6 +578,16 @@ private fun BudgetProgressLine(
                 ),
                 textAlign = TextAlign.Start,
             )
+            if (overdueCount > 0) {
+                Text(
+                    modifier = Modifier.nothing(),
+                    text = "分类超支 $overdueCount 项",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = MaterialTheme.colorScheme.error,
+                    ),
+                    textAlign = TextAlign.End,
+                )
+            }
         }
         return
     }
@@ -641,6 +659,18 @@ private fun BudgetProgressLine(
                         },
                     )
                     .nothing(),
+            )
+        }
+        if (overdueCount > 0) {
+            Text(
+                modifier = Modifier
+                    .padding(top = 6.dp)
+                    .nothing(),
+                text = "分类超支 $overdueCount 项",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    color = MaterialTheme.colorScheme.error,
+                ),
+                textAlign = TextAlign.Start,
             )
         }
     }

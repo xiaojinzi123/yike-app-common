@@ -77,6 +77,21 @@ interface BillUseCase : BusinessMVIUseCase {
     @StateHotObservable
     val currentMonthBudgetStateOb: Flow<MoneyFen>
 
+    /**
+     * 当月分类预算与已花（首页超支提示用）
+     */
+    @StateHotObservable
+    val currentMonthCategoryBudgetStateOb: Flow<List<CategoryBudgetProgress>>
+
+}
+
+/** 分类预算进度，金额单位：分 */
+data class CategoryBudgetProgress(
+    val categoryId: String,
+    val budgetFen: Long,
+    val spentFen: Long,
+) {
+    val isOver: Boolean get() = spentFen > budgetFen
 }
 
 @ViewModelLayer
@@ -179,6 +194,68 @@ class BillUseCaseImpl(
     }.sharedStateIn(
         scope = scope,
     )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val currentMonthCategoryBudgetStateOb = combine(
+        timeRangeStateOb,
+        AppServices.tallyDataSourceSpi.selectedBookStateOb,
+    ) { timeRange, book ->
+        timeRange to book
+    }.flatMapLatest { (timeRange, book) ->
+        if (book == null) {
+            flowOf(emptyList())
+        } else {
+            AppServices
+                .tallyDataSourceSpi
+                .subscribeMonthCategoryBudgets(
+                    bookId = book.id,
+                    typeInfo = monthTypeInfo(timeMs = timeRange.first),
+                )
+                .flatMapLatest { budgets ->
+                    if (budgets.isEmpty()) {
+                        flowOf(emptyList())
+                    } else {
+                        combine(
+                            budgets.map { budget ->
+                                AppServices
+                                    .tallyDataSourceSpi
+                                    .subscribeBillAmountByCondition(
+                                        queryCondition = TallyDataSourceSpi.Companion.BillQueryConditionDto(
+                                            bookIdList = listOf(book.id),
+                                            categoryIdList = listOf(budget.categoryId),
+                                            startTimeInclude = timeRange.first,
+                                            endTimeInclude = timeRange.second - 1,
+                                            amountLessThanZero = true,
+                                        )
+                                    )
+                                    .map { amount ->
+                                        CategoryBudgetProgress(
+                                            categoryId = budget.categoryId,
+                                            budgetFen = budget.amount,
+                                            spentFen = amount.value.absoluteValue,
+                                        )
+                                    }
+                            }
+                        ) { progress ->
+                            progress.toList()
+                        }
+                    }
+                }
+        }
+    }.sharedStateIn(
+        scope = scope,
+    )
+
+    private fun monthTypeInfo(timeMs: Long): String {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = timeMs
+        return String.format(
+            Locale.CHINA,
+            "%04d-%02d",
+            calendar[Calendar.YEAR],
+            calendar[Calendar.MONTH] + 1,
+        )
+    }
 
     @IntentProcess
     private suspend fun bookSelect(intent: BillIntent.BookSelect) {
