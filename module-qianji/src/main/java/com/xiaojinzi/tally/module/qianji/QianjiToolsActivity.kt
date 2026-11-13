@@ -93,6 +93,9 @@ class QianjiToolsActivity : Activity() {
                 }
             )
         })
+        root.addView(action("添加预算小部件", "把「本月支出 / 预算 / 剩余」放到桌面") {
+            requestBudgetWidget()
+        })
 
         status = TextView(this).apply {
             text = ""
@@ -204,6 +207,24 @@ class QianjiToolsActivity : Activity() {
             toast("请在列表中找到「钱迹自动记账」并启用")
         } catch (e: Exception) {
             toast("无法打开无障碍设置")
+        }
+    }
+
+    /** 请求把预算小部件固定到桌面（组件在 module-widget，用字符串避免跨模块编译依赖） */
+    private fun requestBudgetWidget() {
+        try {
+            val manager = android.appwidget.AppWidgetManager.getInstance(this)
+            if (!manager.isRequestPinAppWidgetSupported) {
+                toast("当前桌面不支持一键添加小部件")
+                return
+            }
+            val component = android.content.ComponentName(
+                packageName,
+                "com.xiaojinzi.tally.module.widget.QianjiBudgetWidgetReceiver",
+            )
+            manager.requestPinAppWidget(component, null, null)
+        } catch (e: Exception) {
+            toast("添加失败：${e.message}")
         }
     }
 
