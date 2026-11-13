@@ -38,6 +38,17 @@ object QianjiBridge {
 
     private const val DEFAULT_BOOK_NAME = "默认账本"
 
+    /** 钱迹账单类型（见 Bill.java 常量） */
+    private val TRANSFER_TYPES = setOf(
+        2, // TRANSFER 账户转账
+        3, // CREDIT_HUANKUAN 信用卡还款
+    )
+    private val INCOME_TYPES = setOf(
+        1, // INCOME 收入
+        7, // ZHAIWU_LOAN 借款（钱进来）
+        11, // ZHAIWU_LIXI_INCOME 债务利息收入
+    )
+
     /** 从本机钱迹 data 目录或指定文件导入（幂等：重复导入按 id 覆盖） */
     suspend fun importQianjiDatabase(
         context: Context,
@@ -101,10 +112,13 @@ object QianjiBridge {
             }
 
             rawBills.forEach { raw ->
-                val isTransfer = raw.type == 2
+                // 只有源/目标账户都有效时才能表达为转账
+                val isTransfer = raw.type in TRANSFER_TYPES &&
+                        raw.fromId != null && raw.targetId != null
                 // 钱迹 type=20 是退款账单，refundsid 指向原账单
                 val isRefund = raw.type == 20 && raw.refundSourceId != null
-                val income = raw.type == 1
+                // 退款即使没有来源也应按收入处理（钱回来）
+                val income = raw.type in INCOME_TYPES || raw.type == 20
                 val categoryId = if (isTransfer) {
                     null
                 } else {
