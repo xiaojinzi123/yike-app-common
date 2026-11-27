@@ -1,245 +1,71 @@
 package com.xiaojinzi.tally.module.qianji
 
-import android.app.Activity
-import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
-import android.provider.Settings
-import android.view.Gravity
-import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.TextView
-import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import com.xiaojinzi.component.anno.RouterAnno
 import com.xiaojinzi.component.impl.Router
 import com.xiaojinzi.tally.module.base.support.AppRouterConfig
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import java.io.File
+import com.xiaojinzi.tally.module.base.theme.AppTheme
+import com.xiaojinzi.tally.module.base.theme.PortActionRow
+import com.xiaojinzi.tally.module.base.theme.PortCard
+import com.xiaojinzi.tally.module.base.theme.PortDivider
+import com.xiaojinzi.tally.module.base.theme.PortSectionTitle
+import com.xiaojinzi.tally.module.base.theme.PortPage
+import com.xiaojinzi.tally.module.base.theme.PortTheme
+import com.xiaojinzi.tally.module.base.theme.PortWidgetPicker
 
-/**
- * 钱迹工具页：把 B 方案的三件事收在一个入口里。
- *
- * 1. 导入钱迹原库（qianjiapp / *.db / 备份文件）
- * 2. 导入账单文件（CSV / XLS / XLSX）
- * 3. 打开系统无障碍设置，启用「钱迹自动记账」
- */
+/** 旧 tools 路由的兼容入口；主流程从首页/设置直达各独立页面。 */
 @RouterAnno(hostAndPath = AppRouterConfig.QIANJI_TOOLS)
-class QianjiToolsActivity : Activity() {
+class QianjiToolsActivity : ComponentActivity() {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private var status: TextView? = null
+    private var status by mutableStateOf<String?>(null)
+    private var statusIsError by mutableStateOf(false)
+    private var showWidgetPicker by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xFFF2F3F7.toInt())
-            setPadding(dp(20), dp(24), dp(20), dp(24))
-        }
-        setContentView(ScrollView(this).apply {
-            addView(root, ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        })
-
-        root.addView(TextView(this).apply {
-            text = "钱迹工具"
-            textSize = 22f
-            setTextColor(0xFF111114.toInt())
-        })
-        root.addView(TextView(this).apply {
-            text = "数据只写到本机 yike 数据库，不上传任何服务器。"
-            textSize = 13f
-            setTextColor(0xFF8A8A8E.toInt())
-            setPadding(0, dp(8), 0, dp(20))
-        })
-
-        root.addView(action("导入钱迹数据库", "选择 qianjiapp 或钱迹备份 .db 文件") {
-            pickFile(REQ_DB, listOf("*/*"))
-        })
-        root.addView(action("导入账单文件", "支持 CSV / XLS / XLSX，表头按列名识别") {
-            pickFile(
-                REQ_FILE,
-                listOf(
-                    "text/csv",
-                    "text/comma-separated-values",
-                    "text/plain",
-                    "application/vnd.ms-excel",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                )
-            )
-        })
-        root.addView(action("预算", "总预算 + 分类预算，按 yyyy-MM 记录（钱迹口径）") {
-            Router.with(context = this)
-                .hostAndPath(hostAndPath = AppRouterConfig.QIANJI_BUDGET)
-                .forward()
-        })
-        root.addView(action("启用自动记账", "打开系统无障碍设置，找到「钱迹自动记账」") {
-            openAccessibilitySettings()
-        })
-        // 调试入口：模拟器上没有真实支付页，直接拉起确认页验证写入链路
-        root.addView(action("模拟自动记账（调试）", "直接打开确认页，验证确认 → 落库") {
-            startActivity(
-                Intent(this@QianjiToolsActivity, QianjiConfirmActivity::class.java).apply {
-                    putExtra(QianjiAutoRecordService.EXTRA_AMOUNT, 12.34)
-                    putExtra(QianjiAutoRecordService.EXTRA_INCOME, false)
-                    putExtra(QianjiAutoRecordService.EXTRA_NOTE, "调试模拟")
-                    putExtra(QianjiAutoRecordService.EXTRA_TIME, System.currentTimeMillis())
-                    putExtra(QianjiAutoRecordService.EXTRA_PACKAGE, "debug")
+        enableEdgeToEdge()
+        setContent {
+            AppTheme {
+                PortTheme {
+                    PortPage(title = "钱迹工具", subtitle = "记账与数据管理的快捷入口", onBack = { finish() }) {
+                        PortSectionTitle("记账与数据")
+                        PortCard(contentPadding = PaddingValues(0.dp)) {
+                            PortActionRow("自动记账", subtitle = "管理识别与记账设置", onClick = { navigate(AppRouterConfig.QIANJI_AUTO_RECORD) })
+                            PortDivider()
+                            PortActionRow("导入账单", subtitle = "选择账本，导入 CSV / XLS / 钱迹 DB", onClick = { navigate(AppRouterConfig.QIANJI_IMPORT) })
+                            PortDivider()
+                            PortActionRow("预算", subtitle = "查看月度支出与分类额度", onClick = { navigate(AppRouterConfig.QIANJI_BUDGET) })
+                        }
+                        PortSectionTitle("桌面")
+                        PortCard(contentPadding = PaddingValues(0.dp)) {
+                            PortActionRow("桌面小部件", subtitle = "预览并添加收支、预算小部件", onClick = { showWidgetPicker = true })
+                        }
+                        status?.let { TransferStatus(title = if (statusIsError) "暂时无法完成" else "提示", message = it, error = statusIsError) }
+                    }
+                    if (showWidgetPicker) {
+                        PortWidgetPicker(onDismiss = { showWidgetPicker = false })
+                    }
                 }
-            )
-        })
-        root.addView(action("添加预算小部件", "把「本月支出 / 预算 / 剩余」放到桌面") {
-            requestBudgetWidget()
-        })
-
-        status = TextView(this).apply {
-            text = ""
-            textSize = 14f
-            setTextColor(0xFF34C759.toInt())
-            setPadding(0, dp(24), 0, 0)
-        }
-        root.addView(status)
-
-        root.addView(TextView(this).apply {
-            text = "返回"
-            textSize = 15f
-            setTextColor(0xFF0A84FF.toInt())
-            gravity = Gravity.CENTER
-            setPadding(0, dp(32), 0, 0)
-            setOnClickListener { finish() }
-        })
-    }
-
-    private fun action(title: String, subtitle: String, onClick: () -> Unit): LinearLayout {
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.WHITE)
-            setPadding(dp(16), dp(14), dp(16), dp(14))
-            val lp = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            lp.bottomMargin = dp(10)
-            layoutParams = lp
-            addView(TextView(this@QianjiToolsActivity).apply {
-                text = title
-                textSize = 16f
-                setTextColor(0xFF111114.toInt())
-            })
-            addView(TextView(this@QianjiToolsActivity).apply {
-                text = subtitle
-                textSize = 12f
-                setTextColor(0xFF8A8A8E.toInt())
-                setPadding(0, dp(4), 0, 0)
-            })
-            setOnClickListener { onClick() }
-        }
-    }
-
-    private fun pickFile(requestCode: Int, mimeTypes: List<String>) {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
-            putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes.toTypedArray())
-        }
-        try {
-            startActivityForResult(intent, requestCode)
-        } catch (e: Exception) {
-            toast("没有可用的文件选择器")
-        }
-    }
-
-    @Deprecated("依赖 startActivityForResult 以保持零额外依赖")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode != RESULT_OK) return
-        val uri = data?.data ?: return
-        when (requestCode) {
-            REQ_DB -> importDatabase(uri)
-            REQ_FILE -> importBills(uri)
-        }
-    }
-
-    private fun importDatabase(uri: android.net.Uri) {
-        setStatus("正在导入钱迹数据库…")
-        scope.launch {
-            runCatching {
-                val cached = copyToCache(uri, "qianji_import.db")
-                QianjiBridge.importQianjiDatabase(this@QianjiToolsActivity, cached)
-            }.onSuccess { result ->
-                setStatus(
-                    "导入完成：${result.billCount} 笔账单、" +
-                            "${result.budgetCount} 条预算、${result.labelLinkCount} 条标签关联"
-                )
-            }.onFailure { e ->
-                setStatus("导入失败：${e.message}")
             }
         }
     }
 
-    private fun importBills(uri: android.net.Uri) {
-        setStatus("正在导入账单文件…")
-        scope.launch {
-            runCatching {
-                QianjiFileImporter.import(this@QianjiToolsActivity, uri)
-            }.onSuccess { count ->
-                setStatus("导入完成：$count 笔账单")
-            }.onFailure { e ->
-                setStatus("导入失败：${e.message}")
-            }
-        }
-    }
-
-    private fun copyToCache(uri: android.net.Uri, name: String): File {
-        val out = File(cacheDir, name)
-        contentResolver.openInputStream(uri)?.use { input ->
-            out.outputStream().use { output -> input.copyTo(output) }
-        } ?: throw IllegalStateException("无法读取所选文件")
-        return out
-    }
-
-    private fun openAccessibilitySettings() {
+    private fun navigate(path: String) {
+        status = null
         try {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-            toast("请在列表中找到「钱迹自动记账」并启用")
-        } catch (e: Exception) {
-            toast("无法打开无障碍设置")
+            Router.with(context = this).hostAndPath(hostAndPath = path).forward()
+        } catch (_: Exception) {
+            statusIsError = true
+            status = "页面暂时无法打开，请返回后重试。"
         }
     }
 
-    /** 请求把预算小部件固定到桌面（组件在 module-widget，用字符串避免跨模块编译依赖） */
-    private fun requestBudgetWidget() {
-        try {
-            val manager = android.appwidget.AppWidgetManager.getInstance(this)
-            if (!manager.isRequestPinAppWidgetSupported) {
-                toast("当前桌面不支持一键添加小部件")
-                return
-            }
-            val component = android.content.ComponentName(
-                packageName,
-                "com.xiaojinzi.tally.module.widget.QianjiBudgetWidgetReceiver",
-            )
-            manager.requestPinAppWidget(component, null, null)
-        } catch (e: Exception) {
-            toast("添加失败：${e.message}")
-        }
-    }
-
-    private fun setStatus(text: String) {
-        status?.text = text
-    }
-
-    private fun toast(text: String) {
-        Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
-
-    companion object {
-        private const val REQ_DB = 1001
-        private const val REQ_FILE = 1002
-    }
 }

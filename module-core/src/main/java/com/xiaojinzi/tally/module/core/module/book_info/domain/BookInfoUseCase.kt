@@ -9,7 +9,6 @@ import com.xiaojinzi.reactive.template.domain.BusinessMVIUseCaseImpl
 import com.xiaojinzi.reactive.template.domain.CommonUseCase
 import com.xiaojinzi.reactive.template.domain.CommonUseCaseImpl
 import com.xiaojinzi.support.annotation.ViewModelLayer
-import com.xiaojinzi.support.ktx.orNull
 import com.xiaojinzi.support.ktx.toStringItemDto
 import com.xiaojinzi.tally.lib.res.model.support.MenuItem
 import com.xiaojinzi.tally.lib.res.model.support.MenuItemLevel
@@ -18,13 +17,11 @@ import com.xiaojinzi.tally.module.base.support.AppRouterBaseApi
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
 import com.xiaojinzi.tally.module.base.support.AppServices
 import com.xiaojinzi.tally.module.base.support.bottomMenuSelect
-import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 sealed class BookInfoIntent {
-
-    data object Submit : BookInfoIntent()
-
-    data object ScanQrCodeAndJoinBook : BookInfoIntent()
 
     data class BookSwitch(val id: String) : BookInfoIntent()
 
@@ -33,8 +30,7 @@ sealed class BookInfoIntent {
         val bookId: String,
     ) : BookInfoIntent()
 
-    data class DeleteOrQuitBook(
-        @UiContext val context: Context,
+    data class DeleteBook(
         val bookId: String,
     ) : BookInfoIntent()
 
@@ -52,60 +48,18 @@ class BookInfoUseCaseImpl(
 ), BookInfoUseCase {
 
     @IntentProcess
-    private suspend fun scanQrCodeAndJoinBook(intent: BookInfoIntent.ScanQrCodeAndJoinBook) {
-        AppServices.qrCodeSpi?.scanQrCode().orNull()?.let { scanStr ->
-            val jb = JSONObject(scanStr)
-            val code = jb.getString("code")
-            val bookId = jb.getString("bookId")
-            // 接受邀请分享
-            val bookNecessaryInfo = AppServices.appNetworkSpi.acceptBookShare(
-                code = code,
-                bookId = bookId,
-            )
-            // 插入到数据库
-            AppServices
-                .tallyDataSourceSpi
-                .insertBookNecessaryInfo(
-                    bookNecessaryInfo = bookNecessaryInfo,
-                )
-            tip(
-                content = "接受邀请成功".toStringItemDto(),
-            )
-        }
-    }
-
-    @IntentProcess
     private suspend fun onMoreClick(intent: BookInfoIntent.OnMoreClick) {
-        val userId = AppServices
-            .userSpi
-            .requiredLastUserId()
         val bookInfo = AppServices.tallyDataSourceSpi.getBookById(
             id = intent.bookId,
         ) ?: return
-        // 这个账本是不是自己的
-        val isOwner = bookInfo.userId == userId
-        val menuList = if (bookInfo.isSystem) {
-            listOf(
-                MenuItem(content = "查看账单".toStringItemDto()),
-            )
-        } else {
-            if (isOwner) {
-                listOf(
-                    MenuItem(content = "查看账单".toStringItemDto()),
-                    MenuItem(content = "查看成员和分享".toStringItemDto()),
-                    MenuItem(
-                        content = "删除".toStringItemDto(),
-                        level = MenuItemLevel.Danger,
-                    ),
-                )
-            } else {
-                listOf(
-                    MenuItem(content = "查看账单".toStringItemDto()),
-                    MenuItem(content = "查看成员".toStringItemDto()),
-                    MenuItem(content = "退出这个账本".toStringItemDto()),
-                )
-            }
-        }
+        val menuList = listOf(
+            MenuItem(content = "查看账单".toStringItemDto()),
+            MenuItem(content = "编辑账本".toStringItemDto()),
+            MenuItem(
+                content = "删除账本".toStringItemDto(),
+                level = MenuItemLevel.Danger,
+            ),
+        )
         val selectIndex = AppRouterBaseApi::class
             .routeApi()
             .bottomMenuSelect(
@@ -128,7 +82,7 @@ class BookInfoUseCaseImpl(
             1 -> {
                 AppRouterCoreApi::class
                     .routeApi()
-                    .toBookMemberView(
+                    .toBookCrudView(
                         context = intent.context,
                         bookId = intent.bookId,
                     )
@@ -136,8 +90,7 @@ class BookInfoUseCaseImpl(
 
             2 -> {
                 addIntent(
-                    intent = BookInfoIntent.DeleteOrQuitBook(
-                        context = intent.context,
+                    intent = BookInfoIntent.DeleteBook(
                         bookId = intent.bookId,
                     )
                 )
@@ -147,47 +100,36 @@ class BookInfoUseCaseImpl(
 
     @IntentProcess
     @BusinessMVIUseCase.AutoLoading
-    private suspend fun deleteOrQuitBook(intent: BookInfoIntent.DeleteOrQuitBook) {
-        val userId = AppServices
-            .userSpi
-            .requiredLastUserId()
-        val bookInfo = AppServices.tallyDataSourceSpi.getBookById(
-            id = intent.bookId,
-        ) ?: return
-        // 这个账本是不是自己的
-        val isOwner = bookInfo.userId == userId
-        if (isOwner) {
-            confirmDialogOrError(
-                content = "删除这个账本会删除这个账本下的所有数据\n是否确定删除".toStringItemDto(),
-            )
-            // 删除这个账本
-            AppServices.appNetworkSpi.exitBook(
-                bookId = bookInfo.id,
-                targetUserId = userId,
-            )
-        } else {
-            confirmDialogOrError(
-                content = "退出这个账本会删除此账本未同步的数据\n是否确定退出".toStringItemDto(),
-            )
-            // 退出这个账本
-            AppServices.appNetworkSpi.exitBook(
-                bookId = bookInfo.id,
-                targetUserId = userId,
-            )
+    private suspend fun deleteBook(intent: BookInfoIntent.DeleteBook) {
+        val dataSource = AppServices.tallyDataSourceSpi
+        val bookInfo = dataSource.getBookById(id = intent.bookId) ?: return
+        if (withContext(Dispatchers.IO) { dataSource.getAllBookList().size } <= 1) {
+            tip(content = "请至少保留一个账本".toStringItemDto())
+            return
         }
-        // 删除这个账本下的所有数据
-        AppServices
-            .tallyDataSourceSpi
-            .clearAllDataByBookId(
-                bookId = bookInfo.id,
-            )
+        confirmDialogOrError(
+            content = "删除「${bookInfo.name.orEmpty()}」会永久删除其中的全部本地数据，是否确定删除？".toStringItemDto(),
+        )
+        val books = withContext(Dispatchers.IO) { dataSource.getAllBookList() }
+        if (books.none { it.id == bookInfo.id }) return
+        val nextBook = books.filter { it.id != bookInfo.id }.minByOrNull { it.timeCreate }
+        if (nextBook == null) {
+            tip(content = "请至少保留一个账本".toStringItemDto())
+            return
+        }
+        if (dataSource.selectedBookStateOb.first()?.id == bookInfo.id) {
+            dataSource.switchBook(bookId = nextBook.id)
+        }
+        dataSource.clearAllDataByBookId(bookId = bookInfo.id)
+        tip(content = "账本已删除".toStringItemDto())
     }
 
     @IntentProcess
     private suspend fun bookSwitch(intent: BookInfoIntent.BookSwitch) {
-        /*confirmDialogOrError(
-            content = "账本之间的数据完全隔离\n是否确定切换".toStringItemDto(),
-        )*/
+        if (AppServices.tallyDataSourceSpi.getBookById(id = intent.id) == null) {
+            tip(content = "账本不存在".toStringItemDto())
+            return
+        }
         AppServices
             .tallyDataSourceSpi
             .switchBook(

@@ -1,78 +1,82 @@
 package com.xiaojinzi.tally.module.main.module.main.bill.view
 
-import android.annotation.SuppressLint
+import android.content.Intent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.FileDownload
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import com.haooz.nexioui.theme.NexioTheme
+import com.xiaojinzi.tally.module.base.theme.PortCardExpand
+import com.xiaojinzi.tally.module.base.theme.PortDivider
+import com.xiaojinzi.tally.module.base.theme.PortSecondaryButton
+import com.xiaojinzi.tally.module.base.theme.PortStatusPill
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.constraintlayout.compose.ConstraintLayout
 import com.xiaojinzi.component.impl.Router
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.template.view.BusinessContentView
-import com.xiaojinzi.support.compose.util.circleClip
-import com.xiaojinzi.support.compose.util.clickableNoRipple
-import com.xiaojinzi.support.ktx.format2f
-import com.xiaojinzi.support.ktx.nothing
-import com.xiaojinzi.support.ktx.toStringItemDto
 import com.xiaojinzi.tally.lib.res.model.support.DateTimeType
-import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_NORMAL
-import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_SMALL
 import com.xiaojinzi.tally.module.base.module.common_bill_list.view.CommonBillListView
 import com.xiaojinzi.tally.module.base.support.AppRouterConfig
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
 import com.xiaojinzi.tally.module.base.support.AppServices
+import com.xiaojinzi.tally.module.base.theme.PortActionRow
+import com.xiaojinzi.tally.module.base.theme.PortCard
+import com.xiaojinzi.tally.module.base.theme.PortDesign
+import com.xiaojinzi.tally.module.base.theme.PortPrimaryButton
+import com.xiaojinzi.tally.module.base.theme.PortSectionTitle
+import com.xiaojinzi.tally.module.base.theme.PortTheme
+import com.xiaojinzi.tally.module.base.theme.appPageBackgroundColor
 import com.xiaojinzi.tally.module.base.usecase.TimeSelectUseCase
-import com.xiaojinzi.tally.module.base.view.compose.AppPullRefreshView
-import com.xiaojinzi.tally.module.base.view.compose.AppbarNormalM3
 import com.xiaojinzi.tally.module.main.module.main.bill.domain.BillIntent
-import com.xiaojinzi.tally.module.main.module.main.bill.domain.CategoryBudgetProgress
+import com.xiaojinzi.tally.module.main.module.main.calendar.view.CalendarAct
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlin.math.absoluteValue
+import java.util.Locale
 
 @InternalCoroutinesApi
 @ExperimentalMaterial3Api
@@ -81,596 +85,427 @@ import kotlin.math.absoluteValue
 @Composable
 fun BillView(
     needInit: Boolean? = null,
+    onOpenCalendar: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
-    val isHomeBillStatVisible by AppServices.appConfigSpi.isHomeBillStatVisibleStateOb.collectAsState(
-        initial = false
+    val horizontalPadding = if (LocalConfiguration.current.screenWidthDp >= 600) 20.dp else 16.dp
+    val amountsVisible by AppServices.appConfigSpi.isHomeBillStatVisibleStateOb.collectAsState(
+        initial = false,
     )
-    val bookSelected by AppServices
-        .tallyDataSourceSpi
-        .selectedBookStateOb
-        .collectAsState(initial = null)
-    BusinessContentView<BillViewModel>(
-        needInit = needInit,
-    ) { vm ->
+    val bookSelected by AppServices.tallyDataSourceSpi.selectedBookStateOb.collectAsState(initial = null)
+    BusinessContentView<BillViewModel>(needInit = needInit) { vm ->
         val selectedYear by vm.timeSelectUseCase.selectedYearStateOb.collectAsState(initial = null)
         val selectedMonth by vm.timeSelectUseCase.selectedMonthStateOb.collectAsState(initial = null)
-        val currentMonthIncome by vm.currentMonthIncomeStateOb.collectAsState(
-            initial = null
-        )
-        val currentMonthSpending by vm.currentMonthSpendingStateOb.collectAsState(
-            initial = null
-        )
-        val currentMonthBalance by vm.currentMonthBalanceStateOb.collectAsState(
-            initial = null
-        )
-        val currentMonthBudget by vm.currentMonthBudgetStateOb.collectAsState(
-            initial = null
-        )
-        val categoryBudgetProgress by vm.currentMonthCategoryBudgetStateOb.collectAsState(
-            initial = null
-        )
-        AppPullRefreshView(
+        val spending by vm.currentMonthSpendingStateOb.collectAsState(initial = null)
+        val income by vm.currentMonthIncomeStateOb.collectAsState(initial = null)
+        val balance by vm.currentMonthBalanceStateOb.collectAsState(initial = null)
+        val budget by vm.currentMonthBudgetStateOb.collectAsState(initial = null)
+        val categoryProgress by vm.currentMonthCategoryBudgetStateOb.collectAsState(initial = null)
+        val bills by vm.commonBillListViewUseCase.billListStateObVo.collectAsState(initial = null)
+        val budgetSummary = remember(amountsVisible, budget, spending, categoryProgress) {
+            BillBudgetSummaryVo.create(
+                amountsVisible = amountsVisible,
+                budgetFen = budget?.value,
+                spendingFen = spending?.value,
+                categoryProgress = categoryProgress,
+            )
+        }
+        val monthLabel = "${selectedYear ?: "—"} 年 ${(selectedMonth?.plus(1)) ?: "—"} 月"
+        val canOpenBudget = bookSelected != null && selectedYear != null && selectedMonth != null
+        val onAddBill = {
+            AppRouterCoreApi::class.routeApi().toBillCrudView(context = context)
+        }
+        val onSearch = {
+            AppRouterCoreApi::class.routeApi().toBillSearchView(context = context)
+        }
+        val openCalendar = onOpenCalendar ?: {
+            context.startActivity(Intent(context, CalendarAct::class.java))
+        }
+        val header: @Composable () -> Unit = {
+            BillHomeHeader(
+                bookName = bookSelected?.name ?: "选择账本",
+                monthLabel = monthLabel,
+                amountsVisible = amountsVisible,
+                spendingFen = spending?.value,
+                incomeFen = income?.value,
+                balanceFen = balance?.value,
+                budgetSummary = budgetSummary,
+                canOpenBudget = canOpenBudget,
+                onSelectBook = { vm.addIntent(BillIntent.BookSelect(context = context)) },
+                onSearch = onSearch,
+                onSelectMonth = {
+                    vm.timeSelectUseCase.addIntent(
+                        TimeSelectUseCase.Intent.DateTimeSelect(
+                            context = context,
+                            dateTimeType = DateTimeType.Month,
+                        ),
+                    )
+                },
+                onToggleAmounts = {
+                    AppServices.appConfigSpi.switchHomeBillStatVisible(b = !amountsVisible)
+                },
+                onOpenBudget = {
+                    val year = selectedYear
+                    val month = selectedMonth
+                    if (bookSelected != null && year != null && month != null) {
+                        Router.with(context = context)
+                            .hostAndPath(hostAndPath = AppRouterConfig.QIANJI_BUDGET)
+                            .putString("bookId", bookSelected?.id)
+                            .putString("month", String.format(Locale.CHINA, "%04d-%02d", year, month + 1))
+                            .forward()
+                    }
+                },
+                onAddBill = onAddBill,
+                onAutoRecord = {
+                    Router.with(context).hostAndPath(AppRouterConfig.QIANJI_AUTO_RECORD).forward()
+                },
+                onImport = {
+                    Router.with(context).hostAndPath(AppRouterConfig.QIANJI_IMPORT).forward()
+                },
+                onOpenCalendar = openCalendar,
+            )
+        }
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    // color = MaterialTheme.colorScheme.background,
-                    color = MaterialTheme.colorScheme.surfaceColorAtElevation(
-                        elevation = 1.dp,
-                    ),
-                )
-                .nothing(),
-            onRefresh = {
-                bookSelected?.id?.run {
-                    AppServices
-                        .tallyDataSyncSpi
-                        ?.trySyncSingleBook(
-                            bookId = this,
-                        )
-                }
-            },
+                .background(appPageBackgroundColor())
+                .windowInsetsPadding(WindowInsets.safeDrawing),
+            contentAlignment = Alignment.TopCenter,
         ) {
-            Column(
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .nothing(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .widthIn(max = PortDesign.MaxContentWidth)
+                    .fillMaxSize(),
             ) {
-                // 顶部显示账本 标题 和 搜索按钮
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .statusBarsPadding()
-                        .nothing(),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .align(alignment = Alignment.CenterStart)
-                            .wrapContentSize()
-                            .clickableNoRipple {
-                                vm.addIntent(
-                                    intent = BillIntent.BookSelect(
-                                        context = context,
-                                    )
-                                )
-                            }
-                            .padding(start = APP_PADDING_NORMAL.dp)
-                            .nothing(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            modifier = Modifier
-                                .scale(scale = 0.8f)
-                                .size(size = 20.dp)
-                                .nothing(),
-                            painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_book3),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            modifier = Modifier
-                                .nothing(),
-                            text = bookSelected?.name.orEmpty(),
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            ),
-                            textAlign = TextAlign.Start,
-                        )
-                    }
-                    Text(
-                        modifier = Modifier
-                            .align(alignment = Alignment.Center)
-                            .wrapContentSize()
-                            .nothing(),
-                        text = "一刻记账",
-                        fontFamily = FontFamily(Font(com.xiaojinzi.tally.lib.res.R.font.res_font_xdks)),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        textAlign = TextAlign.Start,
-                    )
-                    Row(
-                        modifier = Modifier
-                            .align(alignment = Alignment.CenterEnd)
-                            .wrapContentSize()
-                            .nothing(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        // 钱迹工具快捷入口（导入 / 预算 / 自动记账）
-                        IconButton(
-                            modifier = Modifier.nothing(),
-                            onClick = {
-                                Router.with(context = context)
-                                    .hostAndPath(hostAndPath = AppRouterConfig.QIANJI_TOOLS)
-                                    .forward()
-                            },
-                        ) {
-                            Icon(
-                                modifier = Modifier
-                                    .size(size = 18.dp)
-                                    .nothing(),
-                                painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_setting1),
-                                contentDescription = "钱迹工具",
-                                tint = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                        IconButton(
-                            modifier = Modifier.nothing(),
-                            onClick = {
-                                AppRouterCoreApi::class
-                                    .routeApi()
-                                    .toBillSearchView(
-                                        context = context,
-                                    )
-                            },
-                        ) {
-                            Icon(
-                                modifier = Modifier
-                                    .size(size = 18.dp)
-                                    .nothing(),
-                                painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_search1),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
-                    }
-                }
-                val initPageIndex = Int.MAX_VALUE / 2
-                val state = rememberPagerState(
-                    initialPage = initPageIndex,
-                ) {
-                    Int.MAX_VALUE
-                }
-                var lastPageIndex by remember {
-                    mutableIntStateOf(value = initPageIndex)
-                }
-                LaunchedEffect(key1 = state) {
-                    snapshotFlow { state.currentPage }
-                        .onEach { pageIndex ->
-                            vm.timeSelectUseCase.addIntent(
-                                intent = TimeSelectUseCase.Intent.MonthAdjust(
-                                    value = pageIndex - lastPageIndex,
-                                )
-                            )
-                            lastPageIndex = pageIndex
-                        }
-                        .launchIn(this)
-                }
-                HorizontalPager(
-                    modifier = Modifier
-                        .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .clip(
-                            shape = MaterialTheme.shapes.medium,
-                        )
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primaryContainer.copy(
-                                        alpha = 0.6f,
-                                    ),
-                                    MaterialTheme.colorScheme.primaryContainer,
-                                ),
-                            )
-                        )
-                        .nothing(),
-                    state = state,
-                ) {
+                if (bills.isNullOrEmpty()) {
+                    // CommonBillListView 的空状态不渲染 headerContent；在这里保留完整首页。
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .nothing(),
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState()),
                     ) {
-                    // 当月的支出和收入统计信息
-                    ConstraintLayout(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .nothing(),
-                    ) {
-                        val (
-                            iconEye, timeView,
-                            textCurrentMonthSpendingName, textCurrentMonthSpendingValue,
-                            textCurrentMonthIncomeName, textCurrentMonthIncomeValue,
-                            textCurrentMonthBalanceName, textCurrentMonthBalanceValue,
-                        ) = createRefs()
-                        val line1 = createEndBarrier(
-                            textCurrentMonthSpendingName, textCurrentMonthSpendingValue,
-                            textCurrentMonthIncomeName, textCurrentMonthIncomeValue,
-                        )
-
-                        Text(
-                            modifier = Modifier
-                                .constrainAs(ref = timeView) {
-                                    this.end.linkTo(
-                                        anchor = parent.end,
-                                        margin = APP_PADDING_NORMAL.dp,
-                                    )
-                                    this.top.linkTo(
-                                        anchor = parent.top,
-                                        margin = APP_PADDING_SMALL.dp,
-                                    )
-                                }
-                                .circleClip()
-                                .background(
-                                    color = MaterialTheme.colorScheme.surface,
-                                )
-                                .clickable {
-                                    vm.timeSelectUseCase.addIntent(
-                                        intent = TimeSelectUseCase.Intent.DateTimeSelect(
-                                            context = context,
-                                            dateTimeType = DateTimeType.Month,
-                                        )
-                                    )
-                                }
-                                .padding(horizontal = 12.dp, vertical = 5.dp)
-                                .nothing(),
-                            text = "${selectedYear ?: "--"}年${selectedMonth?.plus(1) ?: "--"}月",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                color = MaterialTheme.colorScheme.onSurface.copy(
-                                    alpha = 0.8f,
-                                ),
+                        header()
+                        PortCard(
+                            modifier = Modifier.padding(
+                                horizontal = horizontalPadding,
+                                vertical = PortDesign.SectionGap,
                             ),
-                            textAlign = TextAlign.Start,
-                        )
-
-                        Text(
-                            modifier = Modifier
-                                .constrainAs(ref = textCurrentMonthSpendingName) {
-                                    this.start.linkTo(
-                                        anchor = parent.start,
-                                        margin = APP_PADDING_NORMAL.dp
-                                    )
-                                    this.centerVerticallyTo(other = iconEye)
-                                }
-                                .nothing(),
-                            text = "本月支出",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                color = MaterialTheme.colorScheme.outline,
-                            ),
-                            textAlign = TextAlign.Start,
-                        )
-
-                        IconButton(
-                            modifier = Modifier
-                                .scale(scale = 0.9f)
-                                .constrainAs(ref = iconEye) {
-                                    this.start.linkTo(
-                                        anchor = textCurrentMonthSpendingName.end,
-                                        margin = 0.dp,
-                                    )
-                                    this.top.linkTo(
-                                        anchor = parent.top,
-                                        margin = 0.dp
-                                    )
-                                }
-                                .nothing(),
-                            onClick = {
-                                AppServices
-                                    .appConfigSpi
-                                    .switchHomeBillStatVisible(
-                                        b = !isHomeBillStatVisible,
-                                    )
-                            },
                         ) {
-                            Icon(
-                                modifier = Modifier
-                                    .size(size = 16.dp)
-                                    .nothing(),
-                                painter = painterResource(
-                                    id = if (isHomeBillStatVisible) {
-                                        com.xiaojinzi.tally.lib.res.R.drawable.res_eye1
-                                    } else {
-                                        com.xiaojinzi.tally.lib.res.R.drawable.res_eye1_closed
-                                    }
-                                ),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurface,
-                            )
+                            if (bills == null) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(PortDesign.ItemGap),
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(PortDesign.IconSize),
+                                        strokeWidth = 2.dp,
+                                    )
+                                    Text("正在读取账单", style = MaterialTheme.typography.bodyMedium)
+                                }
+                            } else {
+                                Icon(
+                                    modifier = Modifier.size(36.dp),
+                                    painter = painterResource(com.xiaojinzi.tally.lib.res.R.drawable.res_book3),
+                                    contentDescription = null,
+                                    tint = NexioTheme.colorScheme.primary,
+                                )
+                                Text(
+                                    modifier = Modifier.padding(top = 12.dp),
+                                    text = "这个月还没有账单",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = NexioTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
+                                    text = "从第一笔收支开始，慢慢看清每个月的生活。",
+                                    fontSize = 14.sp,
+                                    color = NexioTheme.colorScheme.onSurfaceVariantSummary,
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    PortSecondaryButton(text = "记第一笔", onClick = onAddBill)
+                                    PortSecondaryButton(
+                                        text = "导入账单",
+                                        onClick = {
+                                            Router.with(context).hostAndPath(AppRouterConfig.QIANJI_IMPORT).forward()
+                                        },
+                                    )
+                                }
+                            }
                         }
-
-                        Text(
-                            modifier = Modifier
-                                .constrainAs(ref = textCurrentMonthSpendingValue) {
-                                    this.start.linkTo(
-                                        anchor = textCurrentMonthSpendingName.start,
-                                        margin = 0.dp
-                                    )
-                                    this.top.linkTo(
-                                        anchor = textCurrentMonthSpendingName.bottom,
-                                        margin = APP_PADDING_SMALL.dp
-                                    )
-                                }
-                                .nothing(),
-                            text = if (isHomeBillStatVisible) {
-                                (currentMonthSpending?.toYuan()?.value ?: 0f).format2f()
-                            } else {
-                                "*****"
-                            },
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = MaterialTheme.typography.titleLarge.fontSize * 1.2f,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            ),
-                            textAlign = TextAlign.Start,
-                        )
-                        Text(
-                            modifier = Modifier
-                                .constrainAs(ref = textCurrentMonthIncomeName) {
-                                    this.start.linkTo(
-                                        anchor = parent.start,
-                                        margin = APP_PADDING_NORMAL.dp
-                                    )
-                                    this.top.linkTo(
-                                        anchor = textCurrentMonthSpendingValue.bottom,
-                                        margin = APP_PADDING_NORMAL.dp
-                                    )
-                                }
-                                .nothing(),
-                            text = "本月收入",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                color = MaterialTheme.colorScheme.outline,
-                            ),
-                            textAlign = TextAlign.Start,
-                        )
-                        Text(
-                            modifier = Modifier
-                                .constrainAs(ref = textCurrentMonthIncomeValue) {
-                                    this.start.linkTo(
-                                        anchor = textCurrentMonthIncomeName.start,
-                                        margin = 0.dp
-                                    )
-                                    this.top.linkTo(
-                                        anchor = textCurrentMonthIncomeName.bottom,
-                                        margin = APP_PADDING_SMALL.dp
-                                    )
-                                    this.bottom.linkTo(
-                                        anchor = parent.bottom,
-                                        margin = APP_PADDING_NORMAL.dp
-                                    )
-                                }
-                                .nothing(),
-                            text = if (isHomeBillStatVisible) {
-                                (currentMonthIncome?.toYuan()?.value ?: 0f).format2f()
-                            } else {
-                                "*****"
-                            },
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                    alpha = 0.8f,
-                                ),
-                            ),
-                            textAlign = TextAlign.Start,
-                        )
-                        Text(
-                            modifier = Modifier
-                                .constrainAs(ref = textCurrentMonthBalanceName) {
-                                    this.start.linkTo(
-                                        anchor = line1,
-                                        margin = APP_PADDING_NORMAL.dp
-                                    )
-                                    this.top.linkTo(
-                                        anchor = textCurrentMonthIncomeName.top,
-                                        margin = 0.dp
-                                    )
-                                }
-                                .nothing(),
-                            text = "本月结余",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                color = MaterialTheme.colorScheme.outline,
-                            ),
-                            textAlign = TextAlign.Start,
-                        )
-                        Text(
-                            modifier = Modifier
-                                .constrainAs(ref = textCurrentMonthBalanceValue) {
-                                    this.start.linkTo(
-                                        anchor = textCurrentMonthBalanceName.start,
-                                        margin = 0.dp
-                                    )
-                                    this.top.linkTo(
-                                        anchor = textCurrentMonthBalanceName.bottom,
-                                        margin = APP_PADDING_SMALL.dp
-                                    )
-                                    this.bottom.linkTo(
-                                        anchor = parent.bottom,
-                                        margin = APP_PADDING_NORMAL.dp
-                                    )
-                                }
-                                .nothing(),
-                            text = if (isHomeBillStatVisible) {
-                                (currentMonthBalance?.toYuan()?.value
-                                    ?: 0f).format2f()
-                            } else {
-                                "*****"
-                            },
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                    alpha = 0.8f,
-                                ),
-                            ),
-                            textAlign = TextAlign.Start,
-                        )
+                        Spacer(Modifier.height(PortDesign.SectionGap))
                     }
-
-                    // 预算进度（钱迹口径：yyyy-MM 总预算）
-                    BudgetProgressLine(
-                        budgetFen = currentMonthBudget?.value ?: 0L,
-                        spendingFen = currentMonthSpending?.value?.absoluteValue ?: 0L,
-                        categoryProgress = categoryBudgetProgress.orEmpty(),
-                        onSetBudget = {
-                            Router.with(context = context)
-                                .hostAndPath(hostAndPath = AppRouterConfig.QIANJI_BUDGET)
-                                .forward()
-                        },
+                } else {
+                    CommonBillListView(
+                        modifier = Modifier.fillMaxSize(),
+                        headerContent = header,
+                        commonBillListViewUseCase = vm.commonBillListViewUseCase,
                     )
-                    }
                 }
-                CommonBillListView(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight()
-                        .nothing(),
-                    commonBillListViewUseCase = vm.commonBillListViewUseCase,
-                )
             }
         }
     }
 }
 
-/**
- * 首页预算进度：未设置时给一个入口，设置后显示进度和剩余/超支
- */
 @Composable
-private fun BudgetProgressLine(
-    budgetFen: Long,
-    spendingFen: Long,
-    categoryProgress: List<CategoryBudgetProgress>,
-    onSetBudget: () -> Unit,
+private fun BillHomeHeader(
+    bookName: String,
+    monthLabel: String,
+    amountsVisible: Boolean,
+    spendingFen: Long?,
+    incomeFen: Long?,
+    balanceFen: Long?,
+    budgetSummary: BillBudgetSummaryVo,
+    canOpenBudget: Boolean,
+    onSelectBook: () -> Unit,
+    onSearch: () -> Unit,
+    onSelectMonth: () -> Unit,
+    onToggleAmounts: () -> Unit,
+    onOpenBudget: () -> Unit,
+    onAddBill: () -> Unit,
+    onAutoRecord: () -> Unit,
+    onImport: () -> Unit,
+    onOpenCalendar: () -> Unit,
 ) {
-    val overdueCount = categoryProgress.count { it.isOver }
-    if (budgetFen <= 0L) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickableNoRipple { onSetBudget() }
-                .padding(
-                    start = APP_PADDING_NORMAL.dp,
-                    end = APP_PADDING_NORMAL.dp,
-                    bottom = APP_PADDING_NORMAL.dp,
-                )
-                .nothing(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                modifier = Modifier.nothing(),
-                text = "本月未设预算 · 去设置",
-                style = MaterialTheme.typography.labelMedium.copy(
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                ),
-                textAlign = TextAlign.Start,
-            )
-            if (overdueCount > 0) {
-                Text(
-                    modifier = Modifier.nothing(),
-                    text = "分类超支 $overdueCount 项",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        color = MaterialTheme.colorScheme.error,
-                    ),
-                    textAlign = TextAlign.End,
-                )
-            }
-        }
-        return
-    }
-
-    val over = spendingFen > budgetFen
-    val ratio = (spendingFen.toFloat() / budgetFen.toFloat()).coerceIn(0f, 1f)
-
+    val isTablet = LocalConfiguration.current.screenWidthDp >= 600
+    val horizontalPadding = if (isTablet) 20.dp else 16.dp
+    val scheme = NexioTheme.colorScheme
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickableNoRipple { onSetBudget() }
-            .padding(
-                start = APP_PADDING_NORMAL.dp,
-                end = APP_PADDING_NORMAL.dp,
-                bottom = APP_PADDING_NORMAL.dp,
-            )
-            .nothing(),
+            .padding(horizontal = horizontalPadding)
+            .padding(top = if (isTablet) 24.dp else 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .nothing(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                modifier = Modifier.nothing(),
-                text = "预算 ¥${(budgetFen / 100f).format2f()}",
-                style = MaterialTheme.typography.labelMedium.copy(
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
-                ),
-                textAlign = TextAlign.Start,
-            )
-            Text(
-                modifier = Modifier.nothing(),
-                text = if (over) {
-                    "超支 ¥${((spendingFen - budgetFen) / 100f).format2f()}"
-                } else {
-                    "剩余 ¥${((budgetFen - spendingFen) / 100f).format2f()}"
-                },
-                style = MaterialTheme.typography.labelMedium.copy(
-                    color = if (over) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    },
-                ),
-                textAlign = TextAlign.End,
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    modifier = Modifier.semantics { heading() },
+                    text = "账单",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = scheme.onSurface,
+                )
+                Text(
+                    text = "每一笔，都有迹可循",
+                    fontSize = 13.sp,
+                    color = scheme.onSurfaceVariantSummary,
+                )
+            }
+            IconButton(
+                modifier = Modifier.size(PortDesign.TouchTarget),
+                onClick = onSearch,
+            ) {
+                Icon(
+                    modifier = Modifier.size(PortDesign.IconSize),
+                    painter = painterResource(com.xiaojinzi.tally.lib.res.R.drawable.res_search1),
+                    contentDescription = "搜索账单",
+                )
+            }
+        }
+        PortCard(contentPadding = PaddingValues(0.dp)) {
+            PortActionRow(
+                title = bookName,
+                subtitle = "当前账本 · 点击切换",
+                icon = painterResource(com.xiaojinzi.tally.lib.res.R.drawable.res_book3),
+                onClick = onSelectBook,
             )
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 6.dp)
-                .height(6.dp)
-                .clip(MaterialTheme.shapes.extraSmall)
-                .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f))
-                .nothing(),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(ratio)
-                    .fillMaxHeight()
-                    .background(
-                        color = if (over) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        },
+        PortCard {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PortSecondaryButton(
+                    text = "$monthLabel ▾",
+                    onClick = onSelectMonth,
+                    color = scheme.onSurface,
+                )
+                Spacer(Modifier.weight(1f))
+                IconButton(
+                    modifier = Modifier.size(PortDesign.TouchTarget),
+                    onClick = onToggleAmounts,
+                ) {
+                    Icon(
+                        modifier = Modifier.size(PortDesign.IconSize),
+                        painter = painterResource(
+                            if (amountsVisible) com.xiaojinzi.tally.lib.res.R.drawable.res_eye1
+                            else com.xiaojinzi.tally.lib.res.R.drawable.res_eye1_closed,
+                        ),
+                        contentDescription = if (amountsVisible) "隐藏概览与预算金额" else "显示概览与预算金额",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    .nothing(),
+                }
+            }
+            Text(
+                modifier = Modifier.padding(top = PortDesign.TinyGap, bottom = PortDesign.SmallGap),
+                text = "月度支出",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            val spendingText = if (amountsVisible) "¥ ${formatBillAmount(spendingFen)}" else "••••"
+            Text(
+                text = spendingText,
+                style = when {
+                    spendingText.length > 20 -> MaterialTheme.typography.titleLarge
+                    spendingText.length > 15 -> MaterialTheme.typography.headlineMedium
+                    else -> MaterialTheme.typography.headlineLarge
+                },
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = PortDesign.CardPadding),
+                thickness = 0.5.dp,
+                color = scheme.onSurfaceVariantActions.copy(alpha = 0.1f),
+            )
+            BoxWithConstraints {
+                if (maxWidth < 280.dp || LocalDensity.current.fontScale > 1.3f) {
+                    Column(verticalArrangement = Arrangement.spacedBy(PortDesign.ItemGap)) {
+                        BillAmount("月度收入", incomeFen, amountsVisible)
+                        BillAmount("月度结余", balanceFen, amountsVisible)
+                    }
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(PortDesign.ItemGap)) {
+                        BillAmount("月度收入", incomeFen, amountsVisible, Modifier.weight(1f))
+                        BillAmount("月度结余", balanceFen, amountsVisible, Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+        PortSectionTitle(title = "本月预算")
+        BudgetSummaryCard(
+            summary = budgetSummary,
+            enabled = canOpenBudget,
+            onClick = onOpenBudget,
+        )
+        PortPrimaryButton(
+            modifier = Modifier.fillMaxWidth(),
+            text = "记一笔",
+            icon = rememberVectorPainter(Icons.Rounded.Add),
+            onClick = onAddBill,
+        )
+        PortSectionTitle(title = "快捷记录")
+        PortCard(contentPadding = PaddingValues(0.dp)) {
+            PortActionRow(
+                title = "自动记账",
+                subtitle = "管理识别方式与待确认账单",
+                icon = painterResource(com.xiaojinzi.tally.lib.res.R.drawable.res_robot1),
+                onClick = onAutoRecord,
+            )
+            PortDivider()
+            PortActionRow(
+                title = "导入账单",
+                subtitle = "把已有收支记录整理到当前账本",
+                icon = rememberVectorPainter(Icons.Rounded.FileDownload),
+                onClick = onImport,
+            )
+            PortDivider()
+            PortActionRow(
+                title = "账单日历",
+                subtitle = "按日期回看，长按日期记一笔",
+                icon = painterResource(com.xiaojinzi.tally.lib.res.R.drawable.res_calendar1),
+                onClick = onOpenCalendar,
             )
         }
-        if (overdueCount > 0) {
-            Text(
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PortSectionTitle(
+                modifier = Modifier.weight(1f),
+                title = "最近账单",
+                subtitle = "所选月份的收支记录",
+            )
+            PortSecondaryButton(text = "查看全部", onClick = onSearch)
+        }
+    }
+}
+
+@Composable
+private fun BillAmount(
+    label: String,
+    amountFen: Long?,
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(PortDesign.SmallGap),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = if (visible) "¥ ${formatBillAmount(amountFen)}" else "••••",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+@Composable
+private fun BudgetSummaryCard(
+    summary: BillBudgetSummaryVo,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    PortCard(
+        onClick = if (enabled) onClick else null,
+        contentPadding = PaddingValues(
+            horizontal = PortDesign.CardPadding,
+            vertical = PortDesign.ItemGap,
+        ),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(PortDesign.SmallGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(PortDesign.TinyGap),
+            ) {
+                Text(
+                    text = summary.amountText,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = NexioTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = summary.detailText,
+                    fontSize = 14.sp,
+                    color = if (summary.isOverBudget) NexioTheme.colorScheme.error
+                    else NexioTheme.colorScheme.onSurfaceVariantSummary,
+                )
+            }
+            Icon(
+                modifier = Modifier.size(PortDesign.IconSize),
+                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = "查看与设置月度预算",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        PortCardExpand(visible = summary.progress != null) {
+            LinearProgressIndicator(
                 modifier = Modifier
-                    .padding(top = 6.dp)
-                    .nothing(),
-                text = "分类超支 $overdueCount 项",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = MaterialTheme.colorScheme.error,
-                ),
-                textAlign = TextAlign.Start,
+                    .padding(top = PortDesign.ItemGap)
+                    .fillMaxWidth()
+                    .height(PortDesign.ProgressHeight)
+                    .clip(PortDesign.SmallShape),
+                progress = { summary.progress ?: 0f },
+                color = if (summary.isOverBudget) NexioTheme.colorScheme.error
+                else NexioTheme.colorScheme.primary,
+                trackColor = NexioTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.08f),
+            )
+        }
+        PortCardExpand(visible = summary.categoryStatus != null) {
+            PortStatusPill(
+                modifier = Modifier.padding(top = PortDesign.SmallGap),
+                text = summary.categoryStatus.orEmpty(),
+                isError = true,
             )
         }
     }
@@ -681,23 +516,8 @@ private fun BudgetProgressLine(
 @ExperimentalAnimationApi
 @ExperimentalFoundationApi
 @Composable
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 fun BillViewWrap() {
-    Scaffold(
-        topBar = {
-            AppbarNormalM3(
-                title = "hello".toStringItemDto(),
-            )
-        }
-    ) {
-        Box(
-            modifier = Modifier
-                .padding(top = it.calculateTopPadding())
-                .nothing(),
-        ) {
-            BillView()
-        }
-    }
+    PortTheme { BillView() }
 }
 
 @InternalCoroutinesApi
@@ -707,7 +527,5 @@ fun BillViewWrap() {
 @Preview
 @Composable
 private fun BillViewPreview() {
-    BillView(
-        needInit = false,
-    )
+    PortTheme { BillView(needInit = false) }
 }

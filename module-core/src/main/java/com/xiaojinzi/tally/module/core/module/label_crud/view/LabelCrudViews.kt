@@ -56,7 +56,7 @@ import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_LARGE
 import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_NORMAL
 import com.xiaojinzi.tally.lib.res.ui.AppHeightSpace
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
-import com.xiaojinzi.tally.module.base.view.compose.AppCommonVipButton
+import com.xiaojinzi.tally.module.base.view.compose.AppCommonActionButton
 import com.xiaojinzi.tally.module.base.view.compose.AppbarNormalM3
 import com.xiaojinzi.tally.module.core.module.label_crud.domain.LabelCrudIntent
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -77,8 +77,6 @@ private fun LabelCrudView(
         needInit = needInit,
     ) { vm ->
         val canDelete by vm.canDeleteStateOb.collectAsState(initial = false)
-        val labelCount by vm.labelCountStateOb.collectAsState(initial = null)
-        val isEdit by vm.isEditStateOb.collectAsState(initial = false)
         val labelName by vm.labelNameStateOb.collectAsState(initial = TextFieldValue())
         Column(
             modifier = Modifier
@@ -198,15 +196,12 @@ private fun LabelCrudView(
                         )
                     }
                 }
-                AppCommonVipButton(
+                AppCommonActionButton(
                     modifier = Modifier
                         .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
                         .weight(weight = 1f, fill = true)
                         .wrapContentHeight()
                         .nothing(),
-                    // 是新增并且当前标签不止一个才需要 vip
-                    isVipCheck = !isEdit && labelCount != 0,
-                    vipTipContent = "创建更多标签需要开通会员".toStringItemDto(),
                     text = "提交".toStringItemDto(),
                 ) {
                     vm.addIntent(

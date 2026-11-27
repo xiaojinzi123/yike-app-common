@@ -60,7 +60,7 @@ class AccountIconSelectUseCaseImpl(
     override val dataListStateOb = MutableSharedStateFlow(
         initValue = listOf(
             AccountIconSelectGroup(
-                title = "普通账号".toStringItemDto(),
+                title = "日常资产".toStringItemDto(),
                 items = listOf(
                     AccountIconSelectItem(
                         iconInfo = IconMappingSpi.IconMapping.Coupon1,

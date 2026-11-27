@@ -2,6 +2,7 @@ package com.xiaojinzi.tally.module.qianji
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import androidx.room.withTransaction
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.TallyDb
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.AccountDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BillDo
@@ -12,6 +13,8 @@ import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BudgetDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.CategoryDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.LabelDo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
@@ -26,7 +29,7 @@ import kotlin.math.roundToLong
  * 1) 钱迹原 SQLite 文件 qianjiapp（greenDAO 表结构）
  * 2) yike 自己的 Room TallyDatabase
  *
- * 数据落点固定为 yike 的默认账本（id = 1）：
+ * 数据写入调用方指定的本地账本，省略参数时兼容默认账本（id = 1）：
  * - 不覆盖账本自身的名称/图标（只在账本不存在时创建）
  * - 钱迹分类按名字对齐 yike 分类，缺失的按原名新建，不塞种子分类
  */
@@ -49,21 +52,24 @@ object QianjiBridge {
         11, // ZHAIWU_LIXI_INCOME 债务利息收入
     )
 
-    /** 从本机钱迹 data 目录或指定文件导入（幂等：重复导入按 id 覆盖） */
+    /** 同一目标账本内按源 id 覆盖；账本 1 保留旧 id，其他账本使用独立命名空间。 */
     suspend fun importQianjiDatabase(
         context: Context,
         source: File,
+        targetBookId: String = DEFAULT_BOOK_ID,
+        targetUserId: String = LOCAL_USER_ID,
     ): ImportResult = withContext(Dispatchers.IO) {
-        require(source.exists() && source.length() > 0) { "钱迹数据库不存在或为空: $source" }
+        require(targetBookId.isNotBlank() && targetUserId.isNotBlank()) { "请选择有效的目标账本" }
+        require(source.exists() && source.length() > 0) { "钱迹数据库不存在或为空" }
         val db = SQLiteDatabase.openDatabase(source.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
         val now = System.currentTimeMillis()
         var billCount = 0
         var budgetCount = 0
         var labelLinkCount = 0
-        db.use { qdb ->
-            ensureBook(now)
-            val accountMap = importAccounts(qdb, now)
-            val labelMap = importLabels(qdb, now)
+        db.use { qdb -> TallyDb.database.withTransaction {
+            ensureBook(now, targetBookId, targetUserId)
+            val accountMap = importAccounts(qdb, now, targetBookId, targetUserId)
+            val labelMap = importLabels(qdb, now, targetBookId, targetUserId)
             val categoryCache = mutableMapOf<String, String>()
             val bills = mutableListOf<BillDo>()
             val billLabels = mutableListOf<BillLabelDo>()
@@ -92,6 +98,7 @@ object QianjiBridge {
                 """.trimIndent(), null
             )?.use { c ->
                 while (c.moveToNext()) {
+                    currentCoroutineContext().ensureActive()
                     if (c.getInt(6) == 0) continue // 钱迹软删
                     val type = c.getInt(2)
                     rawBills += RawBill(
@@ -112,6 +119,7 @@ object QianjiBridge {
             }
 
             rawBills.forEach { raw ->
+                currentCoroutineContext().ensureActive()
                 // 只有源/目标账户都有效时才能表达为转账
                 val isTransfer = raw.type in TRANSFER_TYPES &&
                         raw.fromId != null && raw.targetId != null
@@ -127,19 +135,21 @@ object QianjiBridge {
                         income = income,
                         now = now,
                         cache = categoryCache,
+                        targetBookId = targetBookId,
+                        targetUserId = targetUserId,
                     )
                 }
-                val billId = "qj_${raw.id}"
+                val billId = scopedImportId("qj_${raw.id}", targetBookId)
                 bills += BillDo(
                     id = billId,
-                    userId = LOCAL_USER_ID,
-                    bookId = DEFAULT_BOOK_ID,
+                    userId = targetUserId,
+                    bookId = targetBookId,
                     type = when {
                         isTransfer -> "transfer"
                         isRefund -> "refund"
                         else -> "normal"
                     },
-                    originBillId = if (isRefund) "qj_${raw.refundSourceId}" else null,
+                    originBillId = if (isRefund) scopedImportId("qj_${raw.refundSourceId}", targetBookId) else null,
                     time = raw.timeMs,
                     categoryId = categoryId,
                     accountId = raw.assetId?.let { accountMap[it] }
@@ -163,9 +173,9 @@ object QianjiBridge {
                 raw.tagIds.forEach { qianjiTagId ->
                     labelMap[qianjiTagId]?.let { labelId ->
                         billLabels += BillLabelDo(
-                            id = "qjbl_${raw.id}_$labelId",
-                            userId = LOCAL_USER_ID,
-                            bookId = DEFAULT_BOOK_ID,
+                            id = scopedImportId("qjbl_${raw.id}_$labelId", targetBookId),
+                            userId = targetUserId,
+                            bookId = targetBookId,
                             billId = billId,
                             labelId = labelId,
                             timeModify = now,
@@ -177,11 +187,12 @@ object QianjiBridge {
             }
             if (bills.isNotEmpty()) TallyDb.database.billDao().insert(bills)
             if (billLabels.isNotEmpty()) TallyDb.database.billLabelDao().insert(billLabels)
-            billCount = bills.size
-            labelLinkCount = billLabels.size
+            billCount = bills.map { it.id }.toSet().size
+            labelLinkCount = billLabels.map { it.id }.toSet().size
 
-            budgetCount = importBudgets(qdb, now)
-        }
+            budgetCount = importBudgets(qdb, now, targetBookId, targetUserId)
+            currentCoroutineContext().ensureActive()
+        } }
         ImportResult(
             billCount = billCount,
             budgetCount = budgetCount,
@@ -195,14 +206,23 @@ object QianjiBridge {
         val labelLinkCount: Int = 0,
     )
 
-    /** 只在账本不存在时创建，绝不覆盖现有账本 */
-    private suspend fun ensureBook(now: Long) {
+    /** 只为旧 API 补建默认账本；显式选择的账本必须存在，绝不改写已有账本信息。 */
+    private suspend fun ensureBook(
+        now: Long,
+        targetBookId: String = DEFAULT_BOOK_ID,
+        targetUserId: String = LOCAL_USER_ID,
+    ) {
         val bookDao = TallyDb.database.bookDao()
-        if (bookDao.getById(DEFAULT_BOOK_ID) != null) return
+        val existing = bookDao.getById(targetBookId)
+        if (existing != null) {
+            require(existing.userId == targetUserId) { "目标账本已变化，请重新选择" }
+            return
+        }
+        require(targetBookId == DEFAULT_BOOK_ID && targetUserId == LOCAL_USER_ID) { "目标账本不存在，请重新选择" }
         bookDao.insert(
             BookDo(
-                id = DEFAULT_BOOK_ID,
-                userId = LOCAL_USER_ID,
+                id = targetBookId,
+                userId = targetUserId,
                 isSystem = true,
                 type = "normal",
                 name = DEFAULT_BOOK_NAME,
@@ -221,7 +241,12 @@ object QianjiBridge {
      *   避免和导入的账单重复计算
      * - 按名字对齐已有账户，没有就用确定性 id `qja_<钱迹id>` 新建
      */
-    private suspend fun importAccounts(qdb: SQLiteDatabase, now: Long): Map<Long, String> {
+    private suspend fun importAccounts(
+        qdb: SQLiteDatabase,
+        now: Long,
+        targetBookId: String,
+        targetUserId: String,
+    ): Map<Long, String> {
         data class RawAsset(val id: Long, val name: String)
 
         val assets = mutableListOf<RawAsset>()
@@ -230,6 +255,7 @@ object QianjiBridge {
             null,
         )?.use { c ->
             while (c.moveToNext()) {
+                currentCoroutineContext().ensureActive()
                 assets += RawAsset(
                     id = c.getLong(0),
                     name = c.getString(1).orEmpty().ifBlank { "账户${c.getLong(0)}" },
@@ -240,20 +266,21 @@ object QianjiBridge {
 
         val accountDao = TallyDb.database.accountDao()
         val existing = accountDao
-            .getAll(bookId = DEFAULT_BOOK_ID)
+            .getAll(bookId = targetBookId)
             .filterNot { it.isDeleted }
         val map = mutableMapOf<Long, String>()
         assets.forEachIndexed { index, asset ->
+            currentCoroutineContext().ensureActive()
             val byName = existing.firstOrNull { it.name == asset.name }
             if (byName != null) {
                 map[asset.id] = byName.id
             } else {
-                val id = "qja_${asset.id}"
+                val id = scopedImportId("qja_${asset.id}", targetBookId)
                 accountDao.insert(
                     AccountDo(
                         id = id,
-                        userId = LOCAL_USER_ID,
-                        bookId = DEFAULT_BOOK_ID,
+                        userId = targetUserId,
+                        bookId = targetBookId,
                         iconName = null,
                         name = asset.name,
                         balanceInit = 0L,
@@ -278,13 +305,19 @@ object QianjiBridge {
      * - 账单与标签的关联不在独立表，存在 user_bill.EXTRA 的 JSON `"tags": [...]`
      * - 按名字对齐已有标签，没有就用确定性 id `qjl_<钱迹tagId>` 新建
      */
-    private suspend fun importLabels(qdb: SQLiteDatabase, now: Long): Map<String, String> {
+    private suspend fun importLabels(
+        qdb: SQLiteDatabase,
+        now: Long,
+        targetBookId: String,
+        targetUserId: String,
+    ): Map<String, String> {
         val rows = mutableListOf<Pair<String, String>>() // 钱迹 tagId -> name
         qdb.rawQuery(
             "SELECT TAG_ID, NAME, STATUS FROM user_tag",
             null,
         )?.use { c ->
             while (c.moveToNext()) {
+                currentCoroutineContext().ensureActive()
                 if (c.getInt(2) == 0) continue
                 val tagId = c.getString(0) ?: continue
                 val name = c.getString(1).orEmpty().ifBlank { tagId }
@@ -295,23 +328,24 @@ object QianjiBridge {
 
         val labelDao = TallyDb.database.labelDao()
         val nameToId = labelDao
-            .getAllUnderBook(bookId = DEFAULT_BOOK_ID)
+            .getAllUnderBook(bookId = targetBookId)
             .filterNot { it.isDeleted }
             .associate { it.name.orEmpty() to it.id }
             .toMutableMap()
 
         val map = mutableMapOf<String, String>()
         rows.forEach { (tagId, name) ->
+            currentCoroutineContext().ensureActive()
             val existingId = nameToId[name]
             if (existingId != null) {
                 map[tagId] = existingId
             } else {
-                val id = "qjl_$tagId"
+                val id = scopedImportId("qjl_$tagId", targetBookId)
                 labelDao.insert(
                     LabelDo(
                         id = id,
-                        userId = LOCAL_USER_ID,
-                        bookId = DEFAULT_BOOK_ID,
+                        userId = targetUserId,
+                        bookId = targetBookId,
                         name = name,
                         timeCreate = now,
                         timeModify = now,
@@ -353,26 +387,28 @@ object QianjiBridge {
         income: Boolean,
         now: Long,
         cache: MutableMap<String, String>,
+        targetBookId: String = DEFAULT_BOOK_ID,
+        targetUserId: String = LOCAL_USER_ID,
     ): String {
         val type = if (income) "income" else "spending"
         val key = "$type:$name"
         cache[key]?.let { return it }
 
         val dao = TallyDb.database.categoryDao()
-        val existing = dao.getByBookId(DEFAULT_BOOK_ID)
-            .firstOrNull { it.name == name && it.type == type }
-            ?: dao.getByBookId(DEFAULT_BOOK_ID).firstOrNull { it.name == name }
+        val categories = dao.getByBookId(targetBookId).filterNot { it.isDeleted }
+        val existing = categories.firstOrNull { it.name == name && it.type == type }
+            ?: categories.firstOrNull { it.name == name }
         if (existing != null) {
             cache[key] = existing.id
             return existing.id
         }
 
-        val id = "qjc_" + UUID.randomUUID().toString()
+        val id = scopedImportId("qjc_" + UUID.randomUUID().toString(), targetBookId)
         dao.insert(
             CategoryDo(
                 id = id,
-                userId = LOCAL_USER_ID,
-                bookId = DEFAULT_BOOK_ID,
+                userId = targetUserId,
+                bookId = targetBookId,
                 parentId = null,
                 type = type,
                 name = name,
@@ -392,7 +428,12 @@ object QianjiBridge {
      * 钱迹预算：user_budget 的 TYPE=1 表示按月，TYPE_INFO=yyyy-MM，
      * FLAG=1 总预算 / 2 分类预算，MONEY 单位为元。
      */
-    private suspend fun importBudgets(qdb: SQLiteDatabase, now: Long): Int {
+    private suspend fun importBudgets(
+        qdb: SQLiteDatabase,
+        now: Long,
+        targetBookId: String,
+        targetUserId: String,
+    ): Int {
         data class RawBudget(
             val typeInfo: String,
             val flag: Int,
@@ -406,6 +447,7 @@ object QianjiBridge {
             null,
         )?.use { c ->
             while (c.moveToNext()) {
+                currentCoroutineContext().ensureActive()
                 if (c.getInt(0) != 1) continue // 只取按月预算
                 val typeInfo = c.getString(1).orEmpty()
                 if (!typeInfo.matches(Regex("\\d{4}-\\d{2}"))) continue
@@ -427,13 +469,17 @@ object QianjiBridge {
 
         val cache = mutableMapOf<String, String>()
         val budgets = rows.map { raw ->
+            currentCoroutineContext().ensureActive()
             val categoryId = if (raw.flag == BudgetDao.FLAG_CATEGORY && !raw.categoryName.isNullOrBlank()) {
-                resolveCategory(name = raw.categoryName, income = false, now = now, cache = cache)
+                resolveCategory(
+                    name = raw.categoryName, income = false, now = now, cache = cache,
+                    targetBookId = targetBookId, targetUserId = targetUserId,
+                )
             } else null
             BudgetDo(
-                id = budgetId(raw.typeInfo, raw.flag, categoryId),
-                userId = LOCAL_USER_ID,
-                bookId = DEFAULT_BOOK_ID,
+                id = budgetId(raw.typeInfo, raw.flag, categoryId, targetBookId),
+                userId = targetUserId,
+                bookId = targetBookId,
                 flag = raw.flag,
                 categoryId = categoryId,
                 typeInfo = raw.typeInfo,
@@ -443,13 +489,17 @@ object QianjiBridge {
             )
         }
         TallyDb.database.budgetDao().insert(budgets)
-        return budgets.size
+        return budgets.map { it.id }.toSet().size
     }
 
-    /** 与 BudgetActivity 保持一致的确定性 id，重复导入按覆盖处理 */
-    private fun budgetId(typeInfo: String, flag: Int, categoryId: String?): String {
-        return "qjb_${DEFAULT_BOOK_ID}_${typeInfo}_${flag}_${categoryId ?: "total"}"
+    /** 与 BudgetActivity 共用；默认账本保留旧 id，其他账本也使用无歧义命名空间。 */
+    internal fun budgetId(typeInfo: String, flag: Int, categoryId: String?, targetBookId: String): String {
+        return scopedImportId("qjb_${DEFAULT_BOOK_ID}_${typeInfo}_${flag}_${categoryId ?: "total"}", targetBookId)
     }
+
+    /** 长度前缀避免账本 id 中的分隔符产生歧义；旧账本的源 id 完全保留。 */
+    internal fun scopedImportId(legacyId: String, targetBookId: String): String =
+        if (targetBookId == DEFAULT_BOOK_ID) legacyId else "qjbook_${targetBookId.length}_${targetBookId}_$legacyId"
 
     private fun queryCategoryName(qdb: SQLiteDatabase, id: Long): String {
         return qdb.rawQuery("SELECT NAME FROM category WHERE _id = ?", arrayOf(id.toString()))?.use { c ->

@@ -4,12 +4,12 @@ import android.annotation.SuppressLint
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
@@ -30,7 +30,7 @@ import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -50,8 +50,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.surfaceColorAtElevation
@@ -70,6 +68,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -101,10 +100,8 @@ import com.xiaojinzi.support.ktx.tryToggle
 import com.xiaojinzi.tally.lib.res.R
 import com.xiaojinzi.tally.lib.res.model.support.rememberPainter
 import com.xiaojinzi.tally.lib.res.model.tally.TallyCategoryDto
-import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_LARGE
 import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_NORMAL
 import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_SMALL
-import com.xiaojinzi.tally.lib.res.ui.AppShape2
 import com.xiaojinzi.tally.lib.res.ui.AppWidthSpace
 import com.xiaojinzi.tally.lib.res.ui.NoInteractionSource
 import com.xiaojinzi.tally.module.base.ktx.LayoutCustomWidthMode
@@ -113,6 +110,10 @@ import com.xiaojinzi.tally.module.base.ktx.syncWith
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
 import com.xiaojinzi.tally.module.base.support.AppServices
 import com.xiaojinzi.tally.module.base.support.CostEmptyState
+import com.xiaojinzi.tally.module.base.theme.PortCardExpand
+import com.xiaojinzi.tally.module.base.theme.PortDesign
+import com.xiaojinzi.tally.module.base.theme.PortSecondaryButton
+import com.xiaojinzi.tally.module.base.theme.PortTheme
 import com.xiaojinzi.tally.module.core.module.bill_crud.domain.BillCrudIntent
 import com.xiaojinzi.tally.module.core.module.bill_crud.domain.BillCrudTab
 import com.xiaojinzi.tally.module.core.module.category_select.domain.CategorySelectIntent
@@ -124,6 +125,7 @@ import kotlin.math.absoluteValue
 private fun BillCrudKeyboardItemDecorateView(
     modifier: Modifier = Modifier,
     enableClick: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
@@ -131,10 +133,9 @@ private fun BillCrudKeyboardItemDecorateView(
     Box(
         modifier = Modifier
             .then(other = modifier)
-            .padding(all = 1.dp)
-            .clip(
-                shape = AppShape2,
-            )
+            .padding(all = 3.dp)
+            .heightIn(min = PortDesign.TouchTarget)
+            .clip(shape = CircleShape)
             .combinedClickable(
                 enabled = enableClick,
                 onLongClick = onLongClick,
@@ -142,7 +143,7 @@ private fun BillCrudKeyboardItemDecorateView(
                 onClick?.invoke()
             }
             .background(
-                color = MaterialTheme.colorScheme.surface,
+                color = containerColor,
             )
             .nothing(),
         contentAlignment = Alignment.Center,
@@ -155,19 +156,21 @@ private fun BillCrudKeyboardItemDecorateView(
 private fun BillCrudKeyboardTextOrIconItemView(
     modifier: Modifier = Modifier,
     text: String? = null,
-    textStyle: TextStyle = MaterialTheme.typography.bodyMedium.copy(
+    textStyle: TextStyle = MaterialTheme.typography.titleMedium.copy(
         color = MaterialTheme.colorScheme.onSurface,
     ),
     @DrawableRes
     iconRsd: Int? = null,
     iconColor: Color = MaterialTheme.colorScheme.onSurface,
     enableClick: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
     onLongClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
     BillCrudKeyboardItemDecorateView(
         modifier = modifier,
         enableClick = enableClick,
+        containerColor = containerColor,
         onLongClick = onLongClick,
         onClick = onClick,
     ) {
@@ -228,14 +231,10 @@ private fun BillCrudKeyboardCompleteOrUpdateItemView(
     BillCrudKeyboardTextOrIconItemView(
         modifier = modifier,
         text = if (isEdit) "更新" else "完成",
-        textStyle = MaterialTheme.typography.bodyMedium.copy(
-            fontWeight = FontWeight.Bold,
-            color = if (canClick) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-            }
+        textStyle = MaterialTheme.typography.titleMedium.copy(
+            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = if (canClick) 1f else 0.38f),
         ),
+        containerColor = MaterialTheme.colorScheme.primary,
         enableClick = canClick,
         onLongClick = onLongClick,
         onClick = onClick,
@@ -253,6 +252,7 @@ private fun BillCrudKeyboardDeleteItemView(
     BillCrudKeyboardTextOrIconItemView(
         modifier = modifier,
         text = "删除",
+        containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.08f),
         textStyle = MaterialTheme.typography.bodyMedium.copy(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.error
@@ -386,6 +386,7 @@ private fun BillCrudCoreView(
     tabList: List<BillCrudTab>,
 ) {
     val scope = rememberCoroutineScope()
+    val horizontalPadding = if (LocalConfiguration.current.screenWidthDp >= 600) 20.dp else PortDesign.PagePadding
     val context = LocalContext.current
     val isVibrate by AppServices.appConfigSpi.isVibrateStateOb.collectAsState(initial = true)
     val currentSelectTab by vm.tabStateOb.collectAsState(initial = null)
@@ -450,7 +451,7 @@ private fun BillCrudCoreView(
                     .wrapContentHeight()
                     .statusBarsPadding()
                     .padding(
-                        horizontal = APP_PADDING_NORMAL.dp,
+                        horizontal = horizontalPadding,
                         vertical = APP_PADDING_SMALL.dp
                     )
                     .nothing(),
@@ -565,7 +566,7 @@ private fun BillCrudCoreView(
                     .wrapContentHeight()
                     .statusBarsPadding()
                     .padding(
-                        horizontal = APP_PADDING_NORMAL.dp,
+                        horizontal = horizontalPadding,
                         vertical = APP_PADDING_NORMAL.dp
                     )
                     .nothing(),
@@ -589,24 +590,22 @@ private fun BillCrudCoreView(
                         .weight(weight = 1f, fill = true)
                         .wrapContentHeight()
                         .nothing(),
-                    selectedTabIndex = 0,
-                    indicator = @Composable { tabPositions ->
-                        if (categoryPageState.currentPage < tabPositions.size) {
-                            TabRowDefaults.Indicator(
-                                modifier = Modifier
-                                    .tabIndicatorOffset(tabPositions[categoryPageState.currentPage])
-                                    .width(16.dp)
-                                    .requiredWidth(16.dp)
-                                    .nothing()
-                            )
-                        }
-                    },
+                    selectedTabIndex = categoryPageState.currentPage,
+                    containerColor = Color.Transparent,
+                    indicator = {},
                     divider = {
                     },
                 ) {
                     tabList.forEach { item ->
                         val isSelected = currentSelectTab == item
                         Tab(
+                            modifier = Modifier
+                                .padding(horizontal = 2.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                    else Color.Transparent,
+                                ),
                             selected = isSelected,
                             interactionSource = NoInteractionSource,
                             onClick = {
@@ -622,7 +621,7 @@ private fun BillCrudCoreView(
                         ) {
                             Text(
                                 modifier = Modifier
-                                    .padding(bottom = APP_PADDING_SMALL.dp)
+                                    .padding(vertical = 10.dp)
                                     .nothing(),
                                 text = when (item) {
                                     BillCrudTab.Spending -> "支出"
@@ -635,39 +634,26 @@ private fun BillCrudCoreView(
                                     color = if (isSelected) {
                                         MaterialTheme.colorScheme.primary
                                     } else {
-                                        MaterialTheme.colorScheme.inversePrimary
+                                        MaterialTheme.colorScheme.onSurfaceVariant
                                     },
                                 ),
                             )
                         }
                     }
                 }
-                TextButton(
-                    modifier = Modifier
-                        .nothing(),
-                    onClick = {
-                        vm.addIntent(
-                            intent = BillCrudIntent.BookSwitch(
-                                context = context,
+                if (canSwitchBook) {
+                    PortSecondaryButton(
+                        modifier = Modifier.padding(start = 8.dp),
+                        text = bookInfo?.name.orEmpty(),
+                        onClick = {
+                            vm.addIntent(
+                                intent = BillCrudIntent.BookSwitch(
+                                    context = context,
+                                )
                             )
-                        )
-                    },
-                    enabled = !isEdit,
-                ) {
-                    if (canSwitchBook) {
-                        Text(
-                            modifier = Modifier
-                                .animateContentSize()
-                                .padding(bottom = (APP_PADDING_SMALL + 2).dp)
-                                .nothing(),
-                            text = bookInfo?.name.orEmpty(),
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            ),
-                            textAlign = TextAlign.Start,
-                        )
-                    }
+                        },
+                        enabled = !isEdit,
+                    )
                 }
             }
 
@@ -699,14 +685,13 @@ private fun BillCrudCoreView(
                         }
                         BillCrudCategorySelectView(
                             modifier = Modifier
-                                .animateContentSize()
-                                .padding(horizontal = APP_PADDING_LARGE.dp, vertical = 0.dp)
+                                .padding(horizontal = horizontalPadding, vertical = 0.dp)
                                 .fillMaxWidth()
                                 .wrapContentHeight()
-                                .verticalScroll(
-                                    state = rememberScrollState(),
-                                )
-                                .nothing(),
+                                .verticalScroll(state = rememberScrollState())
+                                .clip(PortDesign.CardShape)
+                                .background(MaterialTheme.colorScheme.surface)
+                                .padding(horizontal = 8.dp, vertical = PortDesign.SectionGap),
                             targetCategoryGroupList = targetCategoryGroupList,
                             categoryGroupSelected = categoryGroupSelected,
                             targetSubCategoryGroupList = targetSubCategoryGroupList,
@@ -750,15 +735,15 @@ private fun BillCrudCoreView(
                             Row(
                                 modifier = Modifier
                                     .padding(
-                                        horizontal = (APP_PADDING_NORMAL * 2).dp,
+                                        horizontal = horizontalPadding,
                                         vertical = 0.dp
                                     )
                                     .fillMaxWidth()
                                     .wrapContentHeight()
-                                    .clip(shape = MaterialTheme.shapes.small)
+                                    .clip(shape = PortDesign.CardShape)
                                     .border(
                                         width = 0.5.dp,
-                                        shape = MaterialTheme.shapes.small,
+                                        shape = PortDesign.CardShape,
                                         color = MaterialTheme.colorScheme.outline,
                                     )
                                     .clickable {
@@ -769,7 +754,7 @@ private fun BillCrudCoreView(
                                         )
                                     }
                                     .padding(
-                                        horizontal = APP_PADDING_NORMAL.dp,
+                                        horizontal = horizontalPadding,
                                         vertical = APP_PADDING_NORMAL.dp
                                     )
                                     .nothing(),
@@ -866,15 +851,15 @@ private fun BillCrudCoreView(
                             Row(
                                 modifier = Modifier
                                     .padding(
-                                        horizontal = (APP_PADDING_NORMAL * 2).dp,
+                                        horizontal = horizontalPadding,
                                         vertical = 0.dp
                                     )
                                     .fillMaxWidth()
                                     .wrapContentHeight()
-                                    .clip(shape = MaterialTheme.shapes.small)
+                                    .clip(shape = PortDesign.CardShape)
                                     .border(
                                         width = 0.5.dp,
-                                        shape = MaterialTheme.shapes.small,
+                                        shape = PortDesign.CardShape,
                                         color = MaterialTheme.colorScheme.outline,
                                     )
                                     .clickable {
@@ -885,7 +870,7 @@ private fun BillCrudCoreView(
                                         )
                                     }
                                     .padding(
-                                        horizontal = APP_PADDING_NORMAL.dp,
+                                        horizontal = horizontalPadding,
                                         vertical = APP_PADDING_NORMAL.dp
                                     )
                                     .nothing(),
@@ -970,7 +955,7 @@ private fun BillCrudCoreView(
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(
-                    horizontal = APP_PADDING_NORMAL.dp,
+                    horizontal = horizontalPadding,
                     vertical = APP_PADDING_SMALL.dp
                 )
                 .horizontalScroll(
@@ -1026,7 +1011,7 @@ private fun BillCrudCoreView(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
+                .padding(horizontal = horizontalPadding, vertical = 0.dp)
                 .nothing(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -1128,7 +1113,7 @@ private fun BillCrudCoreView(
                         .horizontalScroll(state = rememberScrollState())
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
+                        .padding(horizontal = horizontalPadding, vertical = 0.dp)
                         .nothing(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -1569,7 +1554,7 @@ fun BillCrudCategorySelectView(
                 targetCategoryGroupList.indexOfFirst { categoryGroupSelected?.id == it.id }
             val isShow =
                 categoryGroupSelected != null && selectIndex in (((rowIndex + 0) * 5 - 1) until ((rowIndex + 1) * 5 - 1))
-            AnimatedVisibility(visible = isShow) {
+            PortCardExpand(visible = isShow) {
                 GridView(
                     modifier = Modifier
                         .padding(
@@ -1806,7 +1791,9 @@ fun BillCrudCategorySelectView(
 @Composable
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 fun BillCrudViewWrap() {
-    BillCrudView()
+    PortTheme {
+        BillCrudView()
+    }
 }
 
 @InternalCoroutinesApi
@@ -1816,7 +1803,9 @@ fun BillCrudViewWrap() {
 @Preview
 @Composable
 private fun BillCrudViewPreview() {
-    BillCrudView(
-        needInit = false,
-    )
+    PortTheme {
+        BillCrudView(
+            needInit = false,
+        )
+    }
 }

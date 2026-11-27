@@ -19,7 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.xiaojinzi.reactive.template.view.BusinessContentView
 import com.xiaojinzi.support.ktx.launchIgnoreError
 import com.xiaojinzi.support.ktx.nothing
-import com.xiaojinzi.tally.lib.res.OssProcess
 import com.xiaojinzi.tally.module.base.view.compose.AppCommonCoilImage
 import com.xiaojinzi.tally.module.imagepreview.lib.viewer.ComposeModel
 import com.xiaojinzi.tally.module.imagepreview.lib.viewer.ImageViewer
@@ -85,7 +84,6 @@ private fun ImagePreviewView(
                                 .nothing(),
                             imageRes = urlList[pageIndex],
                             contentScale = ContentScale.Fit,
-                            cosImageProcess = OssProcess.THUMBNAIL2400,
                         )
                     },
                     boundClip = false,

@@ -63,46 +63,51 @@ fun AppTheme(
         contentAlignment = Alignment.TopCenter,
     ) {
         useDarkThemeAdapter?.let {
+            val themedContent: @Composable () -> Unit = {
+                PortTheme(useDarkTheme = useDarkThemeAdapter) {
+                    AppWallpaperHost(content = content)
+                }
+            }
             when (themeName) {
 
                 THEME_NAME_CHINA_RED -> ChinaRedAppTheme(
                     useDarkTheme = useDarkThemeAdapter,
-                    content = content,
+                    content = themedContent,
                 )
 
                 THEME_NAME_KLEIN_BLUE -> KleinBlueAppTheme(
                     useDarkTheme = useDarkThemeAdapter,
-                    content = content,
+                    content = themedContent,
                 )
 
                 THEME_NAME_SCHENBRUNN_YELLOW -> SchenbrunnYellowAppTheme(
                     useDarkTheme = useDarkThemeAdapter,
-                    content = content,
+                    content = themedContent,
                 )
 
                 THEME_NAME_TITIAN_RED -> TitianRedAppTheme(
                     useDarkTheme = useDarkThemeAdapter,
-                    content = content,
+                    content = themedContent,
                 )
 
                 THEME_NAME_CUSTOM1 -> Custom1AppTheme(
                     useDarkTheme = useDarkThemeAdapter,
-                    content = content,
+                    content = themedContent,
                 )
 
                 THEME_NAME_FOLLOW_SYSTEM -> OliveGreenDynamicAppTheme(
                     useDarkTheme = useDarkThemeAdapter,
-                    content = content,
+                    content = themedContent,
                 )
 
                 THEME_NAME_OLIVE_GREEN -> OliveGreenAppTheme(
                     useDarkTheme = useDarkThemeAdapter,
-                    content = content,
+                    content = themedContent,
                 )
 
                 else -> OliveGreenAppTheme(
                     useDarkTheme = useDarkThemeAdapter,
-                    content = content,
+                    content = themedContent,
                 )
 
             }

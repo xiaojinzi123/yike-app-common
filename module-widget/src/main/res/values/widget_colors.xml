@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- RemoteViews resolve day/night colors from the launcher configuration. -->
+    <color name="widget_background">#F4F4F4</color>
+    <color name="widget_surface">#FFFFFF</color>
+    <color name="widget_text">#1A1A1A</color>
+    <color name="widget_secondary">#757575</color>
+    <color name="widget_accent">#0A84FF</color>
+    <color name="widget_on_accent">#FFFFFF</color>
+    <color name="widget_accent_container">#0F000000</color>
+    <color name="widget_track">#EFEFEF</color>
+    <color name="widget_progress">#800A84FF</color>
+    <color name="widget_error">#D93036</color>
+</resources>

@@ -23,7 +23,6 @@ class BillDetailViewModel(
             BillDetailVo(
                 billId = item?.core?.id,
                 type = item?.core?.type,
-                userInfoCache = item?.user,
                 bookName = item?.book?.name?.toStringItemDto(),
                 categoryImage = AppServices.iconMappingSpi[item?.categoryAdapter?.iconName]?.toLocalImageItemDto(),
                 categoryName = item?.categoryAdapter?.name?.toStringItemDto(),

@@ -153,7 +153,7 @@ interface BillDao {
     /**
      * 某时间段的支出合计（金额为负，返回负数），用于预算统计
      */
-    @Query(value = "select coalesce(sum(amount), 0) from $TableName where bookId = :bookId and isDeleted = 0 and amount < 0 and time >= :start and time < :end")
+    @Query(value = "select coalesce(sum(amount), 0) from $TableName where bookId = :bookId and isDeleted = 0 and type IN ('normal', 'refund') and isNotCalculate = 0 and amount < 0 and time >= :start and time < :end")
     suspend fun sumExpense(
         bookId: String,
         start: Long,
@@ -161,9 +161,9 @@ interface BillDao {
     ): Long
 
     /**
-     * 某时间段、某分类的支出合计（返回负数），用于分类预算
+     * 某时间段、某分类及其子分类的支出合计（返回负数），用于分类预算
      */
-    @Query(value = "select coalesce(sum(amount), 0) from $TableName where bookId = :bookId and categoryId = :categoryId and isDeleted = 0 and amount < 0 and time >= :start and time < :end")
+    @Query(value = "select coalesce(sum(amount), 0) from $TableName where bookId = :bookId and (categoryId = :categoryId or categoryId in (select id from ${CategoryDao.TableName} where bookId = :bookId and parentId = :categoryId)) and isDeleted = 0 and type IN ('normal', 'refund') and isNotCalculate = 0 and amount < 0 and time >= :start and time < :end")
     suspend fun sumExpenseByCategory(
         bookId: String,
         categoryId: String,

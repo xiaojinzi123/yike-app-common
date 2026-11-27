@@ -33,6 +33,7 @@ import com.xiaojinzi.tally.module.base.spi.CostUseCaseSpi
 import com.xiaojinzi.tally.module.base.support.AppRouterBaseApi
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
 import com.xiaojinzi.tally.module.base.support.AppServices
+import com.xiaojinzi.tally.module.base.support.LocalLedgerIdentity
 import com.xiaojinzi.tally.module.base.support.TallyDataSourceHelper
 import com.xiaojinzi.tally.module.core.module.category_select.domain.CategorySelectIntent
 import com.xiaojinzi.tally.module.core.module.category_select.domain.CategorySelectUseCase
@@ -822,9 +823,6 @@ class BillCrudUseCaseImpl(
         isForce: Boolean = false,
     ): Boolean {
 
-        val userId = AppServices
-            .userSpi
-            .requiredLastUserId()
 
         val bookId = categorySelectUseCase.bookIdStateOb.firstOrNull().orNull()
             ?: throw NoBookSelectException()
@@ -985,7 +983,7 @@ class BillCrudUseCaseImpl(
                 .tallyDataSourceSpi
                 .insertBill(
                     target = TallyBillInsertDto(
-                        userId = userId,
+                        userId = LocalLedgerIdentity.requiredId(),
                         bookId = bookId,
                         type = targetBillType.value,
                         categoryId = targetCategoryFinal?.id,
@@ -1008,7 +1006,6 @@ class BillCrudUseCaseImpl(
                         .tallyDataSourceSpi
                         .updateBill(
                             target = tallyBillDto.copy(
-                                userId = userId,
                                 bookId = bookId,
                                 type = targetBillType,
                                 categoryId = targetCategoryFinal?.id,
@@ -1061,9 +1058,6 @@ class BillCrudUseCaseImpl(
     private suspend fun deleteBill(
         intent: BillCrudIntent.Delete,
     ) {
-        val userId = AppServices
-            .userSpi
-            .requiredLastUserId()
         val billId = billIdStateOb.firstOrNull() ?: return
         confirmDialogOrError(
             content = "确定删除这个账单吗？".toStringItemDto(),
@@ -1073,7 +1067,7 @@ class BillCrudUseCaseImpl(
             .getBillDetailById(
                 id = billId,
             )?.core
-        if (targetBill?.userId == userId) {
+        if (targetBill != null) {
             AppServices
                 .tallyDataSourceSpi
                 .updateBill(
@@ -1083,7 +1077,7 @@ class BillCrudUseCaseImpl(
                 )
             commonUseCase.postActivityFinishEvent()
         } else {
-            tip(content = "您没有权限删除这个账单".toStringItemDto())
+            tip(content = "账单不存在".toStringItemDto())
         }
     }
 

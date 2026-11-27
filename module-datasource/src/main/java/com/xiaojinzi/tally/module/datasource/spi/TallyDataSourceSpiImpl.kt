@@ -8,13 +8,9 @@ import com.xiaojinzi.support.ktx.AppScope
 import com.xiaojinzi.support.ktx.LogSupport
 import com.xiaojinzi.support.ktx.MutableSharedStateFlow
 import com.xiaojinzi.support.ktx.NormalMutableSharedFlow
-import com.xiaojinzi.support.ktx.SuspendAction0
-import com.xiaojinzi.support.ktx.awaitIgnoreException
 import com.xiaojinzi.support.ktx.notSupportError
 import com.xiaojinzi.support.ktx.sharedStateIn
-import com.xiaojinzi.support.ktx.suspendAction0
 import com.xiaojinzi.tally.lib.res.model.exception.NoBookSelectException
-import com.xiaojinzi.tally.lib.res.model.support.HourMillisecond
 import com.xiaojinzi.tally.lib.res.model.support.TallyTimeDay
 import com.xiaojinzi.tally.lib.res.model.tally.BillChatDto
 import com.xiaojinzi.tally.lib.res.model.tally.BillChatInsertDto
@@ -35,8 +31,8 @@ import com.xiaojinzi.tally.lib.res.model.tally.TallyCategoryInsertDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyLabelDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyLabelInsertDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyTable
+import com.xiaojinzi.tally.lib.res.model.tally.TallyRemoteCategoryRes
 import com.xiaojinzi.tally.lib.res.model.tally.toInsertDto
-import com.xiaojinzi.tally.lib.res.model.user.UserInfoCacheDto
 import com.xiaojinzi.tally.module.base.spi.TallyDataSourceSpi
 import com.xiaojinzi.tally.module.base.support.AppServices
 import com.xiaojinzi.tally.module.base.view.compose.commonAppToast
@@ -54,7 +50,6 @@ import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BookDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.CategoryDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.LabelDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.SupportBillDetailPageQueryImpl
-import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.UserInfoCacheDo
 import com.xiaojinzi.tally.module.datasource.support.toDo
 import com.xiaojinzi.tally.module.datasource.support.toDto
 import com.xiaojinzi.tally.module.datasource.support.toInsertDto
@@ -185,14 +180,11 @@ class TallyDataSourceSpiImpl : TallyDataSourceSpi {
     }
 
     override suspend fun resetSelectedBook() {
-        val bookInfo = selectedBookIdStateOb.firstOrNull()?.run {
-            getBookById(
-                id = this
-            )
-        }
-        if (bookInfo == null) {
+        val selectedId = selectedBookIdStateOb.firstOrNull()
+        val books = withContext(Dispatchers.IO) { getAllBookList() }
+        if (books.none { it.id == selectedId }) {
             selectedBookIdStateOb.emit(
-                value = allBookStateOb.first().find { it.isSystem }?.id
+                value = (books.find { it.isSystem } ?: books.firstOrNull())?.id,
             )
         }
     }
@@ -231,6 +223,9 @@ class TallyDataSourceSpiImpl : TallyDataSourceSpi {
                             .deleteAllByBookId(
                                 bookId = bookId,
                             )
+                        this.billImageDao().deleteAllByBookId(bookId)
+                        this.billChatDao().deleteAllByBookId(bookId)
+                        this.budgetDao().deleteAllByBookId(bookId)
                         this.bookDao()
                             .deleteById(
                                 id = bookId,
@@ -242,106 +237,18 @@ class TallyDataSourceSpiImpl : TallyDataSourceSpi {
         }
     }
 
-    override fun tryRefreshUserInfoCache(
-        userIdList: List<String>,
-    ): SuspendAction0 {
-        return suspendAction0 {
-            val userInfoCacheDao = TallyDb
-                .database
-                .userInfoCacheDao()
-            val currentTime = System.currentTimeMillis()
-            // 没有过期的数据
-            val oldUserInfoList = userInfoCacheDao
-                .getByIds(
-                    ids = userIdList,
-                )
-                .filter {
-                    it.timeExpire > currentTime
-                }
-            val needInsertOrUpdateUserIdList = userIdList
-                .filter { id ->
-                    oldUserInfoList.none { it.id == id }
-                }
-            val newUserList = AppServices.appNetworkSpi.getUserInfoList(
-                userIdList = needInsertOrUpdateUserIdList,
-            )
-            if (newUserList.isNotEmpty()) {
-                withTransaction {
-                    userInfoCacheDao.insert(
-                        targetList = newUserList.map {
-                            UserInfoCacheDo(
-                                id = it.id,
-                                name = it.name,
-                                // 过期时间要 1 小时
-                                timeExpire = currentTime + HourMillisecond,
-                            )
-                        }
-                    )
-                }
-            }
-        }
-    }
-
-    override suspend fun getCacheUserInfo(userId: String): UserInfoCacheDto? {
-        return TallyDb
-            .database
-            .userInfoCacheDao()
-            .getById(
-                id = userId,
-            )?.toDto()
-    }
-
-    override fun tryRefreshBookList(
-        userId: String,
-    ): SuspendAction0 {
-        return suspendAction0 {
-            val bookList = AppServices.appNetworkSpi.getBookList()
-            val needDeleteBookList = getAllBookList()
-                .filter { item ->
-                    bookList.none { it.id == item.id }
-                }
-            // 插入或者更新所有账本
-            insertBookList(
-                targetList = bookList
-                    .map { it.toInsertDto() }
-            )
-            // 删除远程已经删除的账本
-            needDeleteBookList.forEach { item ->
-                clearAllDataByBookId(
-                    bookId = item.id,
-                )
-            }
-            // 刷新缓存的用户数据
-            tryRefreshUserInfoCache(
-                userIdList = bookList.map {
-                    it.userId
-                }.filter {
-                    it != userId
-                }
-            ).awaitIgnoreException()
-        }
-    }
-
     override suspend fun switchBook(
         bookId: String,
         isTipAfterSwitch: Boolean,
     ) {
         val currentBookId = selectedBookIdStateOb.firstOrNull()
         if (currentBookId != bookId) {
-            val allBook = allBookStateOb
-                .first()
-            val selectedBook = allBook
-                .find { it.id == bookId } ?: allBook.firstOrNull()
+            val books = withContext(Dispatchers.IO) { getAllBookList() }
+            val selectedBook = books.find { it.id == bookId } ?: books.firstOrNull()
             selectedBookIdStateOb.emit(
                 value = selectedBook?.id,
             )
-            selectedBook?.run {
-                AppServices
-                    .tallyDataSyncSpi
-                    ?.trySyncSingleBook(
-                        bookId = this.id,
-                    )
-            }
+            AppServices.appWidgetSpi?.tryUpdateWidget()
             if (isTipAfterSwitch) {
                 commonAppToast(
                     content = "切换成功",
@@ -386,32 +293,19 @@ class TallyDataSourceSpiImpl : TallyDataSourceSpi {
             .getCount() > 0
     }
 
-    override suspend fun syncFirstData(
+    override suspend fun initLocalData(
         userId: String,
     ) {
-        if (!isInitData()) {
-            val syncResult = AppServices.appNetworkSpi.initSync()
-            // 开启事务
-            withTransaction {
-                insertBookList(
-                    targetList = syncResult.bookList.map {
-                        it.toInsertDto()
-                    }
-                )
+        withTransaction {
+            if (!isInitData()) {
+                val book = TallyBookDto.createForOpenSource().copy(userId = userId)
+                insertBookList(targetList = listOf(book.toInsertDto()))
                 insertOrUpdateCategoryList(
-                    targetList = syncResult.categoryList.map {
-                        it.toInsertDto()
-                    }
+                    targetList = TallyRemoteCategoryRes.createForOpenSource().map {
+                        it.toInsertDto().copy(userId = userId, bookId = book.id)
+                    },
                 )
             }
-            // 刷新缓存的用户数据
-            tryRefreshUserInfoCache(
-                userIdList = syncResult.bookList.map {
-                    it.userId
-                }.filter {
-                    it != userId
-                }
-            ).awaitIgnoreException()
         }
     }
 

@@ -1,11 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/res_str_current_day_shou_zhi"
-    android:initialLayout="@layout/glance_default_loading_layout"
-    android:minWidth="80dp"
-    android:minHeight="40dp"
-    android:minResizeWidth="80dp"
-    android:minResizeHeight="40dp"
+    android:initialLayout="@layout/widget_loading"
+    android:minWidth="140dp"
+    android:minHeight="160dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="56dp"
+    android:targetCellWidth="2"
+    android:targetCellHeight="2"
     android:updatePeriodMillis="0"
-    android:previewImage="@drawable/widget_day_stat_preview"
-    android:resizeMode="horizontal|vertical">
-</appwidget-provider>
+    android:previewLayout="@layout/widget_day_preview"
+    android:previewImage="@drawable/widget_day_preview"
+    android:widgetCategory="home_screen"
+    android:resizeMode="horizontal|vertical" />

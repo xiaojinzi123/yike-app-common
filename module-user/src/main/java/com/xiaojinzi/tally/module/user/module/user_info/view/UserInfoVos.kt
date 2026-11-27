@@ -1,1 +1,0 @@
-package com.xiaojinzi.tally.module.user.module.user_info.view

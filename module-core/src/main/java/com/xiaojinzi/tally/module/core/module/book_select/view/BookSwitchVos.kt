@@ -9,6 +9,4 @@ data class BookSelectItemVo(
     val bookId: String,
     val bookIcon: LocalImageItemDto?,
     val bookName: StringItemDto?,
-    // null 表示是自己的, 否则是别人的
-    val userName: StringItemDto?,
 )

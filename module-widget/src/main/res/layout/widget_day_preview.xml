@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Illustrative 300x160dp wide layout matching WidgetContent. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="300dp"
+    android:layout_height="160dp"
+    android:background="@drawable/widget_bg1"
+    android:orientation="vertical"
+    android:padding="12dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:text="@string/widget_day_preview_title"
+            android:textColor="@color/widget_text"
+            android:textSize="17sp"
+            android:fontFamily="sans-serif-medium" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="end"
+            android:singleLine="true"
+            android:text="@string/widget_preview_book"
+            android:textColor="@color/widget_secondary"
+            android:textSize="13sp" />
+    </LinearLayout>
+    <Space android:layout_width="1dp" android:layout_height="8dp" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="64dp"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:text="@string/widget_day_preview_expense_label"
+                android:textColor="@color/widget_secondary"
+                android:textSize="13sp" />
+            <Space android:layout_width="8dp" android:layout_height="1dp" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="10sp"
+                android:autoSizeMaxTextSize="24sp"
+                android:autoSizeStepGranularity="1sp"
+                android:gravity="end"
+                android:singleLine="true"
+                android:text="@string/widget_day_preview_expense"
+                android:textColor="@color/widget_text"
+                android:textSize="24sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+        <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="32dp"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:text="@string/widget_day_preview_income_label"
+                    android:textColor="@color/widget_secondary"
+                    android:textSize="13sp" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:singleLine="true"
+                    android:text="@string/widget_day_preview_income"
+                    android:textColor="@color/widget_text"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif-medium" />
+            </LinearLayout>
+            <Space android:layout_width="12dp" android:layout_height="1dp" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="32dp"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:text="@string/widget_day_preview_balance_label"
+                    android:textColor="@color/widget_secondary"
+                    android:textSize="13sp" />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:singleLine="true"
+                    android:text="@string/widget_day_preview_balance"
+                    android:textColor="@color/widget_text"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif-medium" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+    <Space android:layout_width="1dp" android:layout_height="8dp" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_action_secondary"
+            android:gravity="center"
+            android:singleLine="true"
+            android:text="@string/widget_view_bills_action"
+            android:textColor="@color/widget_text"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium" />
+        <Space android:layout_width="8dp" android:layout_height="1dp" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_action_primary"
+            android:gravity="center"
+            android:singleLine="true"
+            android:text="@string/widget_add_action"
+            android:textColor="@color/widget_on_accent"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium" />
+    </LinearLayout>
+</LinearLayout>

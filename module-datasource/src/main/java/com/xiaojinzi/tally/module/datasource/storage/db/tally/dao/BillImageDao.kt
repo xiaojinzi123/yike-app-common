@@ -90,6 +90,9 @@ interface BillImageDao {
     @Update
     suspend fun update(targetList: List<BillImageDo>)
 
+    @Query("DELETE FROM $TableName WHERE bookId = :bookId")
+    suspend fun deleteAllByBookId(bookId: String)
+
     /**
      * 根据 bookId 获取数据
      */

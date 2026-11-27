@@ -101,7 +101,6 @@ class ThemeSelectViewModel(
                         name = "中国红",
                         themeName = THEME_NAME_CHINA_RED,
                         isSelected = themeName == THEME_NAME_CHINA_RED,
-                        isNeedVip = false,
                         lightPrimary = ChinaRed_md_theme_light_primary,
                         lightPrimaryContainer = ChinaRed_md_theme_light_primaryContainer,
                         darkPrimary = ChinaRed_md_theme_dark_primary,

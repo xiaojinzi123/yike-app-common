@@ -294,46 +294,6 @@ private fun CommonBillListNormalItemView(
                     )
                 }
             }
-            normalItem?.userName?.let { userName ->
-                Spacer(
-                    modifier = Modifier
-                        .height(height = 4.dp)
-                        .nothing()
-                )
-                Row(
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .nothing(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        modifier = Modifier
-                            .size(size = 12.dp)
-                            .nothing(),
-                        painter = painterResource(id = R.drawable.res_people1),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary.copy(
-                            alpha = 0.5f,
-                        ),
-                    )
-                    Spacer(
-                        modifier = Modifier
-                            .width(width = 4.dp)
-                            .nothing()
-                    )
-                    Text(
-                        modifier = Modifier
-                            .nothing(),
-                        text = userName,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = MaterialTheme.colorScheme.primary.copy(
-                                alpha = 0.5f,
-                            ),
-                        ),
-                        textAlign = TextAlign.Start,
-                    )
-                }
-            }
             normalItem?.labelNameList?.let { labelNameList ->
                 if (labelNameList.isNotEmpty()) {
                     Spacer(
@@ -661,7 +621,6 @@ private fun CommonBillListNormalItemViewPreview() {
         normalItem = CommonBillListNormalItemVo(
             billId = "xxx",
             type = TallyBillDto.Type.REFUND,
-            userName = "用户1",
             clipType = CommonBillListItemClipType.TopAndBottom,
             bookName = "账本1".toStringItemDto(),
             // categoryIcon = R.drawable.res_alipay1.toLocalImageItemDto(),

@@ -1,1 +1,0 @@
-package com.xiaojinzi.tally.module.core.module.first_sync.view

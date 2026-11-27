@@ -6,7 +6,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -44,19 +43,15 @@ import androidx.compose.ui.unit.dp
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.template.view.BusinessContentView
 import com.xiaojinzi.support.compose.util.circleClip
-import com.xiaojinzi.support.compose.util.clickPlaceholder
 import com.xiaojinzi.support.compose.util.clickableNoRipple
 import com.xiaojinzi.support.ktx.commonTimeFormat2
 import com.xiaojinzi.support.ktx.nothing
 import com.xiaojinzi.support.ktx.toStringItemDto
-import com.xiaojinzi.tally.lib.res.OssProcess
 import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_NORMAL
 import com.xiaojinzi.tally.lib.res.ui.AppWidthSpace
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
-import com.xiaojinzi.tally.module.base.support.AppServices
 import com.xiaojinzi.tally.module.base.view.compose.AppCommonCoilImage
 import com.xiaojinzi.tally.module.base.view.compose.AppCommonEmptyDataView
-import com.xiaojinzi.tally.module.base.view.compose.AppCommonVipButton
 import com.xiaojinzi.tally.module.base.view.compose.AppbarNormalM3
 import com.xiaojinzi.tally.module.core.module.bill_album.domain.BillAlbumIntent
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -70,7 +65,6 @@ private fun BillAlbumView(
     needInit: Boolean? = false,
 ) {
     val context = LocalContext.current
-    val isVip by AppServices.userSpi.isVipStateOb.collectAsState(initial = false)
     BusinessContentView<BillAlbumViewModel>(
         needInit = needInit,
     ) { vm ->
@@ -191,60 +185,10 @@ private fun BillAlbumView(
                                         }
                                         .nothing(),
                                     imageRes = item.url,
-                                    cosImageProcess = OssProcess.THUMBNAIL400,
                                 )
                             }
                         }
                     }
-                }
-            }
-        }
-        if (!isVip) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        color = MaterialTheme.colorScheme.surface.copy(
-                            alpha = 0.9f,
-                        )
-                    )
-                    .clickPlaceholder()
-                    .nothing(),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .nothing(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = "账单相册\n开通会员立即解锁",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(
-                                alpha = 0.8f,
-                            ),
-                        ),
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(
-                        modifier = Modifier
-                            .height(height = 8.dp)
-                            .nothing()
-                    )
-                    AppCommonVipButton(
-                        modifier = Modifier
-                            .padding(
-                                horizontal = (APP_PADDING_NORMAL * 3).dp,
-                                vertical = 0.dp
-                            )
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .nothing(),
-                        text = "了解会员权益".toStringItemDto(),
-                        isAlertDialog = false,
-                    )
                 }
             }
         }

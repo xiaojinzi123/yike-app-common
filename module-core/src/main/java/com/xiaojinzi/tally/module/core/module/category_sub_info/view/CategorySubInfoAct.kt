@@ -10,11 +10,9 @@ import androidx.core.view.WindowCompat
 import com.xiaojinzi.component.anno.AttrValueAutowiredAnno
 import com.xiaojinzi.component.anno.RouterAnno
 import com.xiaojinzi.module.common.base.interceptor.AlphaInAnimInterceptor
-import com.xiaojinzi.support.activity_stack.ActivityFlag
 import com.xiaojinzi.support.annotation.ViewLayer
 import com.xiaojinzi.support.compose.StateBar
 import com.xiaojinzi.support.ktx.initOnceUseViewModel
-import com.xiaojinzi.tally.lib.res.ui.APP_ACTIVITY_FLAG_SYNC_SKIP
 import com.xiaojinzi.tally.module.base.support.AppRouterConfig
 import com.xiaojinzi.tally.module.base.support.alphaOutWhenFinish
 import com.xiaojinzi.tally.module.base.theme.AppTheme
@@ -22,11 +20,6 @@ import com.xiaojinzi.tally.module.base.view.BaseBusinessAct
 import com.xiaojinzi.tally.module.core.module.category_sub_info.domain.CategorySubInfoIntent
 import kotlinx.coroutines.InternalCoroutinesApi
 
-@ActivityFlag(
-    value = [
-        APP_ACTIVITY_FLAG_SYNC_SKIP,
-    ],
-)
 @RouterAnno(
     hostAndPath = AppRouterConfig.CORE_CATEGORY_SUB_INFO,
     interceptors = [

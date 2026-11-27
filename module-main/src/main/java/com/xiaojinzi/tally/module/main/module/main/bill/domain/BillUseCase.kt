@@ -13,6 +13,7 @@ import com.xiaojinzi.support.annotation.ViewModelLayer
 import com.xiaojinzi.support.ktx.getMonthInterval
 import com.xiaojinzi.support.ktx.sharedStateIn
 import com.xiaojinzi.tally.lib.res.model.tally.MoneyFen
+import com.xiaojinzi.tally.lib.res.model.tally.TallyBillDto
 import com.xiaojinzi.tally.module.base.module.common_bill_list.domain.CommonBillQueryConditionUseCase
 import com.xiaojinzi.tally.module.base.module.common_bill_list.domain.CommonBillQueryConditionUseCaseImpl
 import com.xiaojinzi.tally.module.base.spi.TallyDataSourceSpi
@@ -205,13 +206,14 @@ class BillUseCaseImpl(
         if (book == null) {
             flowOf(emptyList())
         } else {
-            AppServices
-                .tallyDataSourceSpi
-                .subscribeMonthCategoryBudgets(
+            combine(
+                AppServices.tallyDataSourceSpi.subscribeMonthCategoryBudgets(
                     bookId = book.id,
                     typeInfo = monthTypeInfo(timeMs = timeRange.first),
-                )
-                .flatMapLatest { budgets ->
+                ),
+                AppServices.tallyDataSourceSpi.subscribeAllCategory(bookIdList = listOf(book.id)),
+            ) { budgets, categories -> budgets to categories }
+                .flatMapLatest { (budgets, categories) ->
                     if (budgets.isEmpty()) {
                         flowOf(emptyList())
                     } else {
@@ -221,11 +223,18 @@ class BillUseCaseImpl(
                                     .tallyDataSourceSpi
                                     .subscribeBillAmountByCondition(
                                         queryCondition = TallyDataSourceSpi.Companion.BillQueryConditionDto(
+                                            typeList = listOf(
+                                                TallyBillDto.Type.NORMAL,
+                                                TallyBillDto.Type.REFUND,
+                                            ),
                                             bookIdList = listOf(book.id),
-                                            categoryIdList = listOf(budget.categoryId),
+                                            categoryIdList = (listOf(budget.categoryId) + categories
+                                                .filter { it.parentId == budget.categoryId }
+                                                .map { it.id }).distinct(),
                                             startTimeInclude = timeRange.first,
                                             endTimeInclude = timeRange.second - 1,
                                             amountLessThanZero = true,
+                                            isNotCalculate = false,
                                         )
                                     )
                                     .map { amount ->

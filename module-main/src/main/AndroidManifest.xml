@@ -26,14 +26,6 @@
             android:name=".module.theme_select.view.ThemeSelectAct"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.app_update.view.AppUpdateAct"
-            android:theme="@style/Theme.Tally.App.Transparent"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.app_share.view.AppShareAct"
-            android:theme="@style/Theme.Tally.App.Transparent"
-            android:windowSoftInputMode="adjustNothing" />
     </application>
 
 </manifest>

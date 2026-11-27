@@ -9,6 +9,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import androidx.room.Transaction
 
 /**
  * 预算：移植自钱迹的 user_budget 表。
@@ -63,17 +64,35 @@ interface BudgetDao {
     @Query("SELECT * FROM $TableName WHERE bookId = :bookId AND typeInfo = :typeInfo AND isDeleted = 0 ORDER BY flag, amount DESC")
     suspend fun getByBookAndMonth(bookId: String, typeInfo: String): List<BudgetDo>
 
-    @Query("SELECT * FROM $TableName WHERE bookId = :bookId AND typeInfo = :typeInfo AND flag = $FLAG_TOTAL AND isDeleted = 0 LIMIT 1")
+    @Query("SELECT * FROM $TableName WHERE bookId = :bookId AND typeInfo = :typeInfo AND flag = $FLAG_TOTAL AND isDeleted = 0 ORDER BY timeModify DESC, timeCreate DESC, id DESC LIMIT 1")
     suspend fun getTotal(bookId: String, typeInfo: String): BudgetDo?
 
-    @Query("SELECT * FROM $TableName WHERE bookId = :bookId AND typeInfo = :typeInfo AND flag = $FLAG_TOTAL AND isDeleted = 0 LIMIT 1")
+    @Query("SELECT * FROM $TableName WHERE bookId = :bookId AND typeInfo = :typeInfo AND flag = $FLAG_TOTAL AND isDeleted = 0 ORDER BY timeModify DESC, timeCreate DESC, id DESC LIMIT 1")
     fun subscribeTotal(bookId: String, typeInfo: String): kotlinx.coroutines.flow.Flow<BudgetDo?>
 
-    @Query("SELECT * FROM $TableName WHERE bookId = :bookId AND typeInfo = :typeInfo AND flag = $FLAG_CATEGORY AND isDeleted = 0")
+    @Query("SELECT b.* FROM $TableName b WHERE b.bookId = :bookId AND b.typeInfo = :typeInfo AND b.flag = $FLAG_CATEGORY AND b.isDeleted = 0 AND b.categoryId IS NOT NULL AND b.id = (SELECT latest.id FROM $TableName latest WHERE latest.bookId = b.bookId AND latest.typeInfo = b.typeInfo AND latest.flag = b.flag AND latest.categoryId = b.categoryId AND latest.isDeleted = 0 ORDER BY latest.timeModify DESC, latest.timeCreate DESC, latest.id DESC LIMIT 1) ORDER BY b.amount DESC, b.categoryId")
     suspend fun getCategoryBudgets(bookId: String, typeInfo: String): List<BudgetDo>
 
-    @Query("SELECT * FROM $TableName WHERE bookId = :bookId AND typeInfo = :typeInfo AND flag = $FLAG_CATEGORY AND isDeleted = 0")
+    @Query("SELECT b.* FROM $TableName b WHERE b.bookId = :bookId AND b.typeInfo = :typeInfo AND b.flag = $FLAG_CATEGORY AND b.isDeleted = 0 AND b.categoryId IS NOT NULL AND b.id = (SELECT latest.id FROM $TableName latest WHERE latest.bookId = b.bookId AND latest.typeInfo = b.typeInfo AND latest.flag = b.flag AND latest.categoryId = b.categoryId AND latest.isDeleted = 0 ORDER BY latest.timeModify DESC, latest.timeCreate DESC, latest.id DESC LIMIT 1) ORDER BY b.amount DESC, b.categoryId")
     fun subscribeCategoryBudgets(bookId: String, typeInfo: String): kotlinx.coroutines.flow.Flow<List<BudgetDo>>
+
+    /** 保存一个月份额度时合并同范围旧记录，保留传入记录的本地所有权。 */
+    @Transaction
+    suspend fun saveMonthBudget(target: BudgetDo) {
+        require(target.amount > 0 && !target.isDeleted)
+        require(
+            (target.flag == FLAG_TOTAL && target.categoryId == null) ||
+                (target.flag == FLAG_CATEGORY && !target.categoryId.isNullOrBlank()),
+        )
+        deleteMonthBudget(target.bookId, target.typeInfo, target.flag, target.categoryId)
+        insert(target)
+    }
+
+    @Query("DELETE FROM $TableName WHERE bookId = :bookId AND typeInfo = :typeInfo AND flag = :flag AND (:flag = $FLAG_TOTAL OR categoryId = :categoryId)")
+    suspend fun deleteMonthBudget(bookId: String, typeInfo: String, flag: Int, categoryId: String?)
+
+    @Query("DELETE FROM $TableName WHERE bookId = :bookId")
+    suspend fun deleteAllByBookId(bookId: String)
 
     @Query("DELETE FROM $TableName WHERE id = :id")
     suspend fun deleteById(id: String)

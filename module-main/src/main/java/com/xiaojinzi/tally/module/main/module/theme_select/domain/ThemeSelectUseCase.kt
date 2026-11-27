@@ -12,18 +12,12 @@ import com.xiaojinzi.support.annotation.ViewModelLayer
 import com.xiaojinzi.support.ktx.timeAtLeast
 import com.xiaojinzi.support.ktx.toStringItemDto
 import com.xiaojinzi.tally.module.base.support.AppRouterBaseApi
-import com.xiaojinzi.tally.module.base.support.AppRouterUserApi
 import com.xiaojinzi.tally.module.base.support.AppServices
 import com.xiaojinzi.tally.module.base.support.bottomMenuSelectSimple
-import kotlinx.coroutines.flow.first
 
 sealed class ThemeSelectIntent {
 
-    data object Submit : ThemeSelectIntent()
-
     data class ThemeColorSet(
-        @UiContext val context: Context,
-        val isNeedVip: Boolean,
         val themeName: String,
     ) : ThemeSelectIntent()
 
@@ -33,14 +27,8 @@ sealed class ThemeSelectIntent {
 
 }
 
-/**
- * https://www.sohu.com/a/580697550_121124712
- * https://zhuanlan.zhihu.com/p/551176430
- */
 @ViewModelLayer
-interface ThemeSelectUseCase : BusinessMVIUseCase {
-    // TODO
-}
+interface ThemeSelectUseCase : BusinessMVIUseCase
 
 @ViewModelLayer
 class ThemeSelectUseCaseImpl(
@@ -50,27 +38,8 @@ class ThemeSelectUseCaseImpl(
 ), ThemeSelectUseCase {
 
     @IntentProcess
-    private suspend fun submit(intent: ThemeSelectIntent.Submit) {
-        // TODO
-    }
-
-    @IntentProcess
     @BusinessMVIUseCase.AutoLoading
     private suspend fun themeColorSet(intent: ThemeSelectIntent.ThemeColorSet) {
-        if (intent.isNeedVip) {
-            val isVip = AppServices.userSpi.isVipStateOb.first()
-            if (!isVip) {
-                confirmDialogOrError(
-                    content = "此配色需要开通会员\n去开通会员".toStringItemDto(),
-                )
-                AppRouterUserApi::class
-                    .routeApi()
-                    .toVipBuyView(
-                        context = intent.context,
-                    )
-                return
-            }
-        }
         timeAtLeast(timeMillis = 600) {
             AppServices.appInfoSpi.switchTheme(
                 themeName = intent.themeName,

@@ -19,15 +19,11 @@ class BookSwitchViewModel(
     @StateHotObservable
     val allBookStateObVo = useCase.allBookStateOb
         .map { bookList ->
-            val tallyDataSourceSpi = AppServices.tallyDataSourceSpi
             bookList.map { item ->
                 BookSelectItemVo(
                     bookId = item.id,
                     bookIcon = AppServices.iconMappingSpi[item.iconName]?.toLocalImageItemDto(),
                     bookName = item.name?.toStringItemDto(),
-                    userName = tallyDataSourceSpi.getCacheUserInfo(
-                        userId = item.userId,
-                    )?.name?.toStringItemDto(),
                 )
             }
         }

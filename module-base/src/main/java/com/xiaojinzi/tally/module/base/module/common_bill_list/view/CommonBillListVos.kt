@@ -27,9 +27,6 @@ sealed class CommonBillListItemVo
 data class CommonBillListNormalItemVo(
     val billId: String,
     val type: TallyBillDto.Type,
-    // 如果是自己, 就是 null
-    // null 的时候 ui 上不显示
-    val userName: String?,
     val clipType: CommonBillListItemClipType,
     val bookName: StringItemDto?,
     val categoryIcon: LocalImageItemDto?,
@@ -55,7 +52,6 @@ fun TallyBillDetailDto.toCommonBillListNormalItemVo(
     return CommonBillListNormalItemVo(
         billId = this.core.id,
         type = this.core.type,
-        userName = this.user?.name.orNull(),
         clipType = clipType,
         bookName = this.book?.name?.toStringItemDto(),
         categoryIcon = AppServices.iconMappingSpi[this.categoryAdapter?.iconName]?.toLocalImageItemDto(),
