@@ -36,7 +36,7 @@ class AppPlugin : Plugin<Project> {
                     buildConfig = true
                 }
                 packagingOptions.apply {
-                    resources.excludes.add("/META-INF/{AL2.0,LGPL2.1}")
+                    resources.merges.add("/META-INF/{AL2.0,LGPL2.1}")
                 }
             }
             dependencies {
@@ -46,7 +46,6 @@ class AppPlugin : Plugin<Project> {
                 add("implementation", project(":module-main"))
                 add("implementation", project(":module-widget"))
                 add("implementation", project(":module-datasource"))
-                add("implementation", project(":module-qrcode"))
                 add("implementation", project(":module-image-picker"))
                 add("implementation", project(":module-image-preview"))
                 add("implementation", project(":module-user"))

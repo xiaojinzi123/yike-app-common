@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -141,46 +139,6 @@ private fun CategorySubInfoView(
                             ),
                             textAlign = TextAlign.Start,
                         )
-                        parentCategory?.userInfoCache?.let { userCacheInfo ->
-                            Spacer(
-                                modifier = Modifier
-                                    .height(height = 4.dp)
-                                    .nothing()
-                            )
-                            Row(
-                                modifier = Modifier
-                                    .wrapContentSize()
-                                    .nothing(),
-                                verticalAlignment = Alignment.Bottom,
-                            ) {
-                                Icon(
-                                    modifier = Modifier
-                                        .size(size = 12.dp)
-                                        .nothing(),
-                                    painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_people1),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary.copy(
-                                        alpha = 0.5f,
-                                    ),
-                                )
-                                Spacer(
-                                    modifier = Modifier
-                                        .width(width = 4.dp)
-                                        .nothing()
-                                )
-                                Text(
-                                    modifier = Modifier
-                                        .nothing(),
-                                    text = userCacheInfo.name.orEmpty(),
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = MaterialTheme.colorScheme.primary.copy(
-                                            alpha = 0.5f,
-                                        ),
-                                    ),
-                                    textAlign = TextAlign.Start,
-                                )
-                            }
-                        }
                     }
                     Spacer(modifier = Modifier.weight(weight = 1f, fill = true))
                     if (isSort) {
@@ -334,46 +292,6 @@ private fun CategorySubInfoView(
                                         ),
                                         textAlign = TextAlign.Start,
                                     )
-                                    item.userInfoCache?.let { userCacheInfo ->
-                                        Spacer(
-                                            modifier = Modifier
-                                                .height(height = 4.dp)
-                                                .nothing()
-                                        )
-                                        Row(
-                                            modifier = Modifier
-                                                .wrapContentSize()
-                                                .nothing(),
-                                            verticalAlignment = Alignment.Bottom,
-                                        ) {
-                                            Icon(
-                                                modifier = Modifier
-                                                    .size(size = 12.dp)
-                                                    .nothing(),
-                                                painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_people1),
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary.copy(
-                                                    alpha = 0.5f,
-                                                ),
-                                            )
-                                            Spacer(
-                                                modifier = Modifier
-                                                    .width(width = 4.dp)
-                                                    .nothing()
-                                            )
-                                            Text(
-                                                modifier = Modifier
-                                                    .nothing(),
-                                                text = userCacheInfo.name.orEmpty(),
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    color = MaterialTheme.colorScheme.primary.copy(
-                                                        alpha = 0.5f,
-                                                    ),
-                                                ),
-                                                textAlign = TextAlign.Start,
-                                            )
-                                        }
-                                    }
                                 }
                                 Spacer(modifier = Modifier.weight(weight = 1f, fill = true))
                                 if (isSort) {

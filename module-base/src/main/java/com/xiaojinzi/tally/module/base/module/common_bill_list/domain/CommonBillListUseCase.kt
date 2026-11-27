@@ -216,50 +216,20 @@ class CommonBillListUseCaseImpl(
         val billDetail = AppServices.tallyDataSourceSpi.getBillDetailById(
             id = intent.billId,
         ) ?: return
-        val currentUserId = AppServices.userSpi.requiredLastUserId()
-        // 是否是我的订单
-        val isMineBill = billDetail.core.userId == currentUserId
-        // 是否支持退款
         val isSupportRefund = billDetail.core.userCanRefund(
-            targetUserId = currentUserId,
+            targetUserId = billDetail.core.userId,
         )
         val selectItemList = buildList {
-            if (
-            // 只有是我的账单或者是普通账单或者是转账账单才支持复制
-                isMineBill || billDetail.core.type in listOf(
-                    TallyBillDto.Type.NORMAL,
-                    TallyBillDto.Type.TRANSFER
-                )
-            )
-                this.add(
-                    element = MenuItem(
-                        content = "复制".toStringItemDto(),
-                        flag = PopMenu.COPY.name,
-                    ),
-                )
+            add(MenuItem(content = "复制".toStringItemDto(), flag = PopMenu.COPY.name))
             if (isSupportRefund) {
-                this.add(
-                    element = MenuItem(
-                        content = "退款".toStringItemDto(),
-                        flag = PopMenu.REFUND.name,
-                    ),
-                )
+                add(MenuItem(content = "退款".toStringItemDto(), flag = PopMenu.REFUND.name))
             }
-            if (isMineBill) {
-                this.add(
-                    element = MenuItem(
-                        content = "编辑".toStringItemDto(),
-                        flag = PopMenu.EDIT.name,
-                    ),
-                )
-                this.add(
-                    element = MenuItem(
-                        content = "删除".toStringItemDto(),
-                        level = MenuItemLevel.Danger,
-                        flag = PopMenu.DELETE.name,
-                    ),
-                )
-            }
+            add(MenuItem(content = "编辑".toStringItemDto(), flag = PopMenu.EDIT.name))
+            add(MenuItem(
+                content = "删除".toStringItemDto(),
+                level = MenuItemLevel.Danger,
+                flag = PopMenu.DELETE.name,
+            ))
         }
         // 如果没有可用的菜单就返回
         if (selectItemList.isEmpty()) {
@@ -316,16 +286,14 @@ class CommonBillListUseCaseImpl(
             }
 
             PopMenu.DELETE.name -> {
-                if (isMineBill) {
-                    confirmDialogOrError(
-                        content = "确定删除这条账单吗?".toStringItemDto(),
+                confirmDialogOrError(
+                    content = "确定删除这条账单吗?".toStringItemDto(),
+                )
+                AppServices.tallyDataSourceSpi.updateBill(
+                    target = billDetail.core.copy(
+                        isDeleted = true,
                     )
-                    AppServices.tallyDataSourceSpi.updateBill(
-                        target = billDetail.core.copy(
-                            isDeleted = true,
-                        )
-                    )
-                }
+                )
             }
         }
 

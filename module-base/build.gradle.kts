@@ -11,12 +11,23 @@ dependencies {
     api(project(":lib-res"))
     api(libs.xiaojinzi.android.support.init)
     api(libs.xiaojinzi.android.support.activitystack)
-    api(libs.xiaojinzi.android.support.ktx.retrofit)
-    api(libs.xiaojinzi.android.module.storage)
-    api(libs.xiaojinzi.android.module.ffmpeg)
-    api(libs.xiaojinzi.android.module.ali.oss)
-    api(libs.xiaojinzi.android.module.ali.pay)
-    api(libs.xiaojinzi.android.module.wx.sdk)
+    // 保留本地存储、媒体及图片能力，裁掉外部 module-base 传递的接口与下载库。
+    api(libs.xiaojinzi.android.module.storage) {
+        exclude(group = "com.github.xiaojinzi123.AndroidSupport", module = "lib-ktx-retrofit")
+        exclude(group = "com.github.xiaojinzi123.AndroidSupport", module = "lib-download")
+        exclude(group = "com.squareup.retrofit2")
+        // 旧 UI 预览依赖与当前 Compose Runtime 的类和命名空间冲突。
+        exclude(group = "androidx.ui")
+        exclude(group = "androidx.compose", module = "compose-runtime")
+    }
+    api(libs.xiaojinzi.android.module.ffmpeg) {
+        exclude(group = "com.github.xiaojinzi123.AndroidSupport", module = "lib-ktx-retrofit")
+        exclude(group = "com.github.xiaojinzi123.AndroidSupport", module = "lib-download")
+        exclude(group = "com.squareup.retrofit2")
+        // 旧 UI 预览依赖与当前 Compose Runtime 的类和命名空间冲突。
+        exclude(group = "androidx.ui")
+        exclude(group = "androidx.compose", module = "compose-runtime")
+    }
     api(libs.xiaojinzi.android.reactive.core)
     api(libs.xiaojinzi.android.reactive.template)
     api(libs.xiaojinzi.android.reactive.template.compose)
@@ -26,6 +37,8 @@ dependencies {
     api(libs.androidx.work.manager.ktx)
 
     api(libs.lottie.compose)
+
+    api("com.github.HaoZai000.NexioUI:nexioui:0.1.1")
 
     api(libs.compose.runtime)
     api(libs.compose.runtime.android)

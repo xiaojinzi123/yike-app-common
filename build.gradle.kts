@@ -18,3 +18,10 @@ plugins {
     id("com.google.dagger.hilt.android") version libs.versions.hilt apply false
     alias(libs.plugins.compose.compiler) apply false
 }
+
+subprojects {
+    configurations.configureEach {
+        // Parcelize 运行库已包含旧包名兼容类，避免传递依赖重复打包。
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-android-extensions-runtime")
+    }
+}

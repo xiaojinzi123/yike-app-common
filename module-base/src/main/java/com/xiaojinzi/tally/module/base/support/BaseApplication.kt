@@ -3,26 +3,26 @@ package com.xiaojinzi.tally.module.base.support
 import android.app.Application
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import com.xiaojinzi.component.Component
 import com.xiaojinzi.component.Config
 import com.xiaojinzi.component.error.ignore.ErrorIgnore
 import com.xiaojinzi.component.support.ASMUtil
-import com.xiaojinzi.module.common.base.support.CommonServices
 import com.xiaojinzi.reactive.template.ReactiveTemplate
 import com.xiaojinzi.support.activity_stack.ActivityStack
 import com.xiaojinzi.support.init.AppInstance
 import com.xiaojinzi.support.init.CheckInit
 import com.xiaojinzi.support.ktx.AppScope
 import com.xiaojinzi.support.ktx.LogSupport
-import com.xiaojinzi.support.ktx.launchIgnoreError
 import com.xiaojinzi.support.ktx.orNull
 import com.xiaojinzi.support.ktx.toStringItemDto
 import com.xiaojinzi.tally.lib.res.model.exception.CommonBusinessException
-import com.xiaojinzi.tally.lib.res.model.network.AppNetworkException
 import com.xiaojinzi.tally.module.base.ktx.getProcessName
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
+import com.xiaojinzi.tally.module.base.view.compose.commonAppToast
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * TODO:
@@ -90,10 +90,6 @@ abstract class BaseApplication : Application() {
                         error.message.orNull()?.toStringItemDto()
                     }
 
-                    is AppNetworkException -> {
-                        error.message.orNull()?.toStringItemDto()
-                    }
-
                     else -> null
                 }
             },
@@ -127,49 +123,26 @@ abstract class BaseApplication : Application() {
                 .build()
         )
 
-        // 其他初始化
-        AppScope.launchIgnoreError {
-            // 等待同意隐私协议
-            AppServices
-                .appConfigSpi
-                .isAgreedPrivacyAgreementStateOb
-                .filter { it }
-                .first()
-            val latestUserId = AppServices
-                .userSpi
-                .latestUserIdStateOb
-                .firstOrNull()
-            // 说明没登录过或者退出登录了
-            if (latestUserId.isNullOrBlank()) {
-                // 不做任何初始化
-            } else {
-                // 登陆过, 但是可能用户信息为空
-                // 初始化数据库
-                AppServices
-                    .tallyDataSourceInitSpi
-                    .initTallyDataBase(
-                        userId = latestUserId,
-                    )
-                // 销毁一些使用了数据库的服务发现
-                AppServices
-                    .destroySpiAboutTallyDatabase()
-                // 启动 更新 widget 的 服务
-                AppServices
-                    .appWidgetSpi?.apply {
-                        this.startWidgetServiceIfUsed()
-                    }
-            }
-            // 初始化阿里云 OSS
-            CommonServices.aliOssSpi?.init(
-                endpoint = "oss-cn-hangzhou.aliyuncs.com",
-                bucket = "tally2",
-            )
-            // 微信相关初始化
-            CommonServices
-                .wxSpi
-                ?.init(
-                    appId = AppServices.appInfoSpi.wxAppId,
+        // 由进程启动恢复本地账本，桌面组件冷启动也不依赖页面或账号流程。
+        AppScope.launch(Dispatchers.IO) {
+            try {
+                val ownerId = LocalLedgerIdentity.requiredId()
+                // 初始化入口在本地模板和选中账本准备完成后才报告数据库可用。
+                AppServices.tallyDataSourceInitSpi.initTallyDataBase(
+                    userId = ownerId,
                 )
+                AppServices.appWidgetSpi?.startWidgetServiceIfUsed()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(tag, "恢复本地账本失败", e)
+                withContext(Dispatchers.Main) {
+                    commonAppToast(
+                        content = "恢复本地账本失败，请重新启动应用后重试",
+                        isShort = false,
+                    )
+                }
+            }
         }
 
     }

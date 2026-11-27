@@ -1,4 +1,3 @@
-import com.android.build.api.dsl.BuildType
 import com.android.build.api.dsl.CommonExtension
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.LibraryExtension
@@ -21,13 +20,11 @@ class BasicConfigPlugin : Plugin<Project> {
             }
 
             extensions.findByType(AppExtension::class.java)?.run {
-                @Suppress("UNCHECKED_CAST")
-                (this as CommonExtension<*, BuildType, *, *, *, *>).basicConfig(project = project)
+                (this as CommonExtension).basicConfig(project = project)
             }
 
             extensions.findByType(LibraryExtension::class.java)?.run {
-                @Suppress("UNCHECKED_CAST")
-                (this as CommonExtension<*, BuildType, *, *, *, *>).basicConfig(project = project)
+                (this as CommonExtension).basicConfig(project = project)
             }
 
         }

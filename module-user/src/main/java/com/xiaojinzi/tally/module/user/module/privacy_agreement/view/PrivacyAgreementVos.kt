@@ -1,1 +1,0 @@
-package com.xiaojinzi.tally.module.user.module.privacy_agreement.view

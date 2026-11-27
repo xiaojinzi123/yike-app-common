@@ -29,7 +29,7 @@ class BookInfoViewModel(
             emitOneWhileSubscribe = true,
         )
     ) { bookList, _ ->
-        bookList.map { item ->
+        bookList.sortedBy { it.timeCreate }.map { item ->
             val queryCondition = TallyDataSourceSpi.Companion.BillQueryConditionDto(
                 bookIdList = listOf(item.id),
             )
@@ -59,10 +59,6 @@ class BookInfoViewModel(
                 ).toYuan(),
                 billCount = AppServices.tallyDataSourceSpi.getBillCountByCondition(
                     queryCondition = queryCondition,
-                ),
-                isSystem = item.isSystem,
-                userInfo = AppServices.tallyDataSourceSpi.getCacheUserInfo(
-                    userId = item.userId,
                 ),
                 timeCreate = item.timeCreate,
             )

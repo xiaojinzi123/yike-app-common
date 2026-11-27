@@ -14,7 +14,6 @@ import com.xiaojinzi.support.ktx.sharedStateIn
 import com.xiaojinzi.support.ktx.toStringItemDto
 import com.xiaojinzi.tally.lib.res.model.exception.NoBookSelectException
 import com.xiaojinzi.tally.lib.res.model.tally.TallyTable
-import com.xiaojinzi.tally.lib.res.model.user.UserInfoCacheDto
 import com.xiaojinzi.tally.module.base.support.AppServices
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -28,10 +27,8 @@ import kotlinx.coroutines.flow.map
 @Keep
 data class CategorySubInfoCategoryUseCaseDto(
     val id: String,
-    val userId: String,
     val name: String?,
     val iconName: String?,
-    val userInfoCache: UserInfoCacheDto?,
     val sort: Long,
     // 是否有删除的权限
     val canDelete: Boolean,
@@ -101,10 +98,9 @@ class CategorySubInfoUseCaseImpl(
             TallyTable.Category,
             emitOneWhileSubscribe = true,
         ),
-        AppServices.userSpi.latestUserIdStateOb,
         AppServices.tallyDataSourceSpi.selectedBookStateOb,
         parentIdStateOb,
-    ) { _, currentUserId, bookInfo, id ->
+    ) { _, bookInfo, id ->
         bookInfo?.let {
             id.orNull()?.let {
                 AppServices
@@ -116,16 +112,10 @@ class CategorySubInfoUseCaseImpl(
                     ?.getAdapter?.run {
                         CategorySubInfoCategoryUseCaseDto(
                             id = this.id,
-                            userId = this.userId,
                             name = this.name,
                             iconName = this.iconName,
-                            userInfoCache = AppServices
-                                .tallyDataSourceSpi
-                                .getCacheUserInfo(
-                                    userId = this.userId,
-                                ),
                             sort = this.sort,
-                            canDelete = currentUserId != null && currentUserId == this.userId,
+                            canDelete = true,
                         )
                     }
             }
@@ -144,7 +134,6 @@ class CategorySubInfoUseCaseImpl(
                     .subscribeDataBaseTableChangedOb(
                         TallyTable.Category, emitOneWhileSubscribe = true,
                     ).map {
-                        val currentUserId = AppServices.userSpi.latestUserIdStateOb.firstOrNull()
                         AppServices
                             .tallyDataSourceSpi
                             .getCategoryByParentId(
@@ -155,16 +144,10 @@ class CategorySubInfoUseCaseImpl(
                             .map { item ->
                                 CategorySubInfoCategoryUseCaseDto(
                                     id = item.id,
-                                    userId = item.userId,
                                     name = item.name,
                                     iconName = item.iconName,
-                                    userInfoCache = AppServices
-                                        .tallyDataSourceSpi
-                                        .getCacheUserInfo(
-                                            userId = item.userId,
-                                        ),
                                     sort = item.sort,
-                                    canDelete = currentUserId != null && currentUserId == item.userId,
+                                    canDelete = true,
                                 )
                             }
                     }

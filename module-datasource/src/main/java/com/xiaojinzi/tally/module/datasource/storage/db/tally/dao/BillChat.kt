@@ -64,6 +64,9 @@ interface BillChatDao {
         id: Long,
     )
 
+    @Query("DELETE FROM $TableName WHERE bookId = :bookId")
+    suspend fun deleteAllByBookId(bookId: String)
+
     @Query("SELECT timeCreated FROM $TableName WHERE bookId = :bookId ORDER BY timeCreated DESC LIMIT :pageStartIndex, :pageSize")
     suspend fun getTimeList(
         bookId: String,

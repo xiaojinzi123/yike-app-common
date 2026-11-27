@@ -6,7 +6,6 @@ import android.content.Intent
 import androidx.annotation.UiContext
 import com.xiaojinzi.component.anno.router.AfterRouteActionAnno
 import com.xiaojinzi.component.anno.router.AfterRouteEventActionAnno
-import com.xiaojinzi.component.anno.router.FlagAnno
 import com.xiaojinzi.component.anno.router.HostAndPathAnno
 import com.xiaojinzi.component.anno.router.NavigateAnno
 import com.xiaojinzi.component.anno.router.ParameterAnno
@@ -16,7 +15,6 @@ import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.component.support.ParameterSupport
 import com.xiaojinzi.module.common.base.CommonRouterConfig
 import com.xiaojinzi.support.bean.StringItemDto
-import com.xiaojinzi.support.ktx.app
 import com.xiaojinzi.support.ktx.notSupportError
 import com.xiaojinzi.support.ktx.orNull
 import com.xiaojinzi.tally.lib.res.model.support.DateTimeModel
@@ -28,55 +26,6 @@ import com.xiaojinzi.tally.module.base.spi.TallyDataSourceSpi
 
 @RouterApiAnno
 interface AppRouterCoreApi {
-
-    @HostAndPathAnno(value = AppRouterConfig.CORE_AI_BILL_CHAT)
-    fun toAiBillChatView(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.CORE_AI_BILL_CREATE)
-    fun toAiBillCreateView(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @NavigateAnno(
-        forIntent = true,
-        resultCodeMatch = Activity.RESULT_OK,
-    )
-    @RequestCodeAnno
-    @HostAndPathAnno(value = AppRouterConfig.CORE_BILL_CYCLE_REPEAT_COUNT)
-    suspend fun billCycleRepeatCountBySuspend(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    ): Intent
-
-    @NavigateAnno(
-        forIntent = true,
-        resultCodeMatch = Activity.RESULT_OK,
-    )
-    @RequestCodeAnno
-    @HostAndPathAnno(value = AppRouterConfig.CORE_BILL_CYCLE_NOTE)
-    suspend fun billCycleNoteBySuspend(
-        @UiContext context: Context,
-        @ParameterAnno("note") note: String? = null,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    ): Intent
-
-    @HostAndPathAnno(value = AppRouterConfig.CORE_BILL_CYCLE_CRUD)
-    fun toBillCycleCrudView(
-        @UiContext context: Context,
-        // 如果为空, 表示新增
-        @ParameterAnno("editId") editId: Long? = null,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.CORE_BILL_CYCLE)
-    fun toBillCycleView(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
 
     @HostAndPathAnno(value = AppRouterConfig.CORE_ICON_SELECT)
     fun toIconSelectView(
@@ -166,12 +115,6 @@ interface AppRouterCoreApi {
         @AfterRouteActionAnno action: () -> Unit = {},
     ): Intent
 
-    @HostAndPathAnno(value = AppRouterConfig.CORE_FIRST_SYNC)
-    fun toFirstSyncView(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
     @HostAndPathAnno(value = AppRouterConfig.CORE_LABEL_INFO)
     fun toLabelInfoView(
         @UiContext context: Context,
@@ -257,6 +200,7 @@ interface AppRouterCoreApi {
     @HostAndPathAnno(value = AppRouterConfig.CORE_BOOK_CRUD)
     fun toBookCrudView(
         @UiContext context: Context,
+        @ParameterAnno("bookId") bookId: String? = null,
         @AfterRouteActionAnno action: () -> Unit = {},
     )
 
@@ -278,20 +222,6 @@ interface AppRouterCoreApi {
         @ParameterAnno("bookIdList") bookIdList: ArrayList<String> = arrayListOf(),
         @AfterRouteActionAnno action: () -> Unit = {},
     ): Intent
-
-    @HostAndPathAnno(value = AppRouterConfig.CORE_BOOK_MEMBER)
-    fun toBookMemberView(
-        @UiContext context: Context,
-        @ParameterAnno("bookId") bookId: String,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.CORE_BOOK_INVITE)
-    fun toBookInviteView(
-        @UiContext context: Context,
-        @ParameterAnno("bookId") bookId: String,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
 
     @HostAndPathAnno(value = AppRouterConfig.CORE_ACCOUNT_INFO)
     fun toAccountInfoView(
@@ -363,78 +293,13 @@ interface AppRouterCoreApi {
         @AfterRouteActionAnno action: () -> Unit = {},
     )
 
-    @HostAndPathAnno(value = AppRouterConfig.CORE_SYNC_LOG)
-    fun toSyncLogView(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
 }
 
 @RouterApiAnno
 interface AppRouterUserApi {
 
-    @RequestCodeAnno
-    @NavigateAnno(resultCodeMatch = Activity.RESULT_OK)
-    @HostAndPathAnno(value = AppRouterConfig.USER_PRIVACY_AGREEMENT)
-    suspend fun privacyAgreementBySuspend(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.USER_BIND_PHONE)
-    fun toBindPhoneView(
-        @UiContext context: Context,
-        @ParameterAnno("wxAuthId") wxAuthId: String? = null,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.USER_LOGIN)
-    fun toLoginView(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.USER_LOGIN)
-    suspend fun toLoginViewSuspend(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @FlagAnno(Intent.FLAG_ACTIVITY_NEW_TASK)
-    @HostAndPathAnno(value = AppRouterConfig.USER_LOGIN)
-    suspend fun toLoginViewInNewTaskSuspend(
-        @UiContext context: Context = app,
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.USER_VIP_BUY)
-    fun toVipBuyView(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
     @HostAndPathAnno(value = AppRouterConfig.USER_ABOUT_US)
     fun toAboutUsView(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.USER_INFO)
-    fun toUserInfoView(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.USER_VIP_EXPIRE_REMIND)
-    fun toVipExpireRemindView(
-        @UiContext context: Context,
-        @AfterRouteActionAnno action: () -> Unit = {},
-    )
-
-    @RequestCodeAnno
-    @NavigateAnno(resultCodeMatch = Activity.RESULT_OK)
-    @HostAndPathAnno(value = AppRouterConfig.USER_LOG_OFF_CONFIRM)
-    suspend fun signOutConfirmBySuspend(
         @UiContext context: Context,
         @AfterRouteActionAnno action: () -> Unit = {},
     )
@@ -458,19 +323,6 @@ interface AppRouterMainApi {
 
     @HostAndPathAnno(value = AppRouterConfig.MAIN_THEME_SELECT)
     fun toThemeSelectView(
-        @UiContext context: Context,
-        @AfterRouteEventActionAnno action: () -> Unit = {},
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.MAIN_APP_UPDATE)
-    fun toAppUpdateView(
-        @UiContext context: Context,
-        @ParameterAnno("isTip") isTip: Boolean = false,
-        @AfterRouteEventActionAnno action: () -> Unit = {},
-    )
-
-    @HostAndPathAnno(value = AppRouterConfig.MAIN_APP_SHARE)
-    fun toAppShareView(
         @UiContext context: Context,
         @AfterRouteEventActionAnno action: () -> Unit = {},
     )
@@ -517,12 +369,6 @@ interface AppRouterBaseApi {
         @UiContext context: Context,
         @ParameterAnno("data") items: ArrayList<MenuItem>,
     ): Intent
-
-    @HostAndPathAnno(AppRouterConfig.BASE_WEB)
-    fun toWebView(
-        @UiContext context: Context,
-        @ParameterAnno("url") url: String,
-    )
 
 }
 

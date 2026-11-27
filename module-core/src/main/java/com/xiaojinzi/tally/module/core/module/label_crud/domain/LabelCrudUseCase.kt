@@ -16,8 +16,8 @@ import com.xiaojinzi.support.ktx.toStringItemDto
 import com.xiaojinzi.tally.lib.res.model.exception.NoBookSelectException
 import com.xiaojinzi.tally.lib.res.model.tally.TallyLabelDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyLabelInsertDto
-import com.xiaojinzi.tally.lib.res.model.tally.TallyTable
 import com.xiaojinzi.tally.module.base.support.AppServices
+import com.xiaojinzi.tally.module.base.support.LocalLedgerIdentity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -38,12 +38,6 @@ sealed class LabelCrudIntent {
 
 @ViewModelLayer
 interface LabelCrudUseCase : BusinessMVIUseCase {
-
-    /**
-     * 标签的数量
-     */
-    @StateHotObservable
-    val labelCountStateOb: Flow<Int?>
 
     /**
      * 标签名称
@@ -84,29 +78,6 @@ class LabelCrudUseCaseImpl(
     commonUseCase = commonUseCase,
 ), LabelCrudUseCase {
 
-    override val labelCountStateOb = combine(
-        AppServices
-            .tallyDataSourceSpi
-            .subscribeDataBaseTableChangedOb(
-                TallyTable.Label, emitOneWhileSubscribe = true,
-            ),
-        AppServices
-            .tallyDataSourceSpi
-            .selectedBookStateOb,
-    ) { _, currentBookInfo ->
-        currentBookInfo?.let {
-            AppServices
-                .tallyDataSourceSpi
-                .getAllLabelUnderBook(
-                    bookId = currentBookInfo.id,
-                    isExcludeDeleted = true,
-                )
-                .count()
-        }
-    }.sharedStateIn(
-        scope = scope,
-    )
-
     override val labelNameStateOb = MutableSharedStateFlow(
         initValue = TextFieldValue("")
     )
@@ -137,11 +108,8 @@ class LabelCrudUseCaseImpl(
         it != null
     }
 
-    override val canDeleteStateOb = combine(
-        AppServices.userSpi.latestUserIdStateOb,
-        editLabelInfoStateOb,
-    ) { selfUserId, labelInfo ->
-        selfUserId != null && selfUserId == labelInfo?.userId
+    override val canDeleteStateOb = editLabelInfoStateOb.map { labelInfo ->
+        labelInfo?.getAdapter != null
     }
 
     @IntentProcess
@@ -190,9 +158,6 @@ class LabelCrudUseCaseImpl(
 
     @IntentProcess
     private suspend fun submit(intent: LabelCrudIntent.Submit) {
-        val userId = AppServices
-            .userSpi
-            .requiredLastUserId()
         val book = AppServices.tallyDataSourceSpi.selectedBookStateOb.firstOrNull()
             ?: throw NoBookSelectException()
         val labelName = labelNameStateOb.first().text
@@ -201,7 +166,7 @@ class LabelCrudUseCaseImpl(
         if (editLabelInfo == null) {
             AppServices.tallyDataSourceSpi.insertLabel(
                 target = TallyLabelInsertDto(
-                    userId = userId,
+                    userId = LocalLedgerIdentity.requiredId(),
                     bookId = book.id,
                     name = labelName,
                 )

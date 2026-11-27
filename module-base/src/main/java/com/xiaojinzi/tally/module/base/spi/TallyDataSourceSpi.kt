@@ -4,7 +4,6 @@ import android.os.Parcelable
 import androidx.annotation.Keep
 import com.xiaojinzi.support.annotation.PublishHotObservable
 import com.xiaojinzi.support.annotation.StateHotObservable
-import com.xiaojinzi.support.ktx.SuspendAction0
 import com.xiaojinzi.tally.lib.res.model.exception.NoBookSelectException
 import com.xiaojinzi.tally.lib.res.model.support.TallyTimeDay
 import com.xiaojinzi.tally.lib.res.model.tally.BillChatDto
@@ -28,7 +27,6 @@ import com.xiaojinzi.tally.lib.res.model.tally.TallyLabelDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyLabelInsertDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyTable
 import com.xiaojinzi.tally.lib.res.model.tally.toInsertDto
-import com.xiaojinzi.tally.lib.res.model.user.UserInfoCacheDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.parcelize.Parcelize
 
@@ -91,6 +89,13 @@ interface TallyDataSourceSpi {
             val isNotCalculate: Boolean? = null,
             val isDeleted: Boolean? = false,
         ) : Parcelable
+
+        /** 分类预算，金额单位：分 */
+        @Keep
+        data class MonthCategoryBudgetDto(
+            val categoryId: String,
+            val amount: Long,
+        )
 
     }
 
@@ -178,27 +183,6 @@ interface TallyDataSourceSpi {
     )
 
     /**
-     * 尝试刷新用户信息的缓存
-     */
-    fun tryRefreshUserInfoCache(
-        userIdList: List<String>,
-    ): SuspendAction0
-
-    /**
-     * 获取缓存的用户信息
-     */
-    suspend fun getCacheUserInfo(
-        userId: String,
-    ): UserInfoCacheDto?
-
-    /**
-     * 尝试更新账本
-     */
-    fun tryRefreshBookList(
-        userId: String,
-    ): SuspendAction0
-
-    /**
      * 切换账本
      */
     suspend fun switchBook(
@@ -252,10 +236,8 @@ interface TallyDataSourceSpi {
      */
     suspend fun isInitData(): Boolean
 
-    /**
-     * 同步第一次的数据
-     */
-    suspend fun syncFirstData(
+    /** 仅在空库中创建本地默认账本与分类，不覆盖已有账目。 */
+    suspend fun initLocalData(
         userId: String,
     )
 
@@ -383,6 +365,24 @@ interface TallyDataSourceSpi {
     fun subscribeBillAmountByCondition(
         queryCondition: BillQueryConditionDto = BillQueryConditionDto(),
     ): Flow<MoneyFen>
+
+    /**
+     * 订阅某账本某月（yyyy-MM）的总预算，未设置时为 0
+     *
+     * 数据来自 budget 表（钱迹口径：flag=1 总预算，typeInfo=yyyy-MM，单位分）
+     */
+    fun subscribeMonthTotalBudget(
+        bookId: String,
+        typeInfo: String,
+    ): Flow<MoneyFen>
+
+    /**
+     * 订阅某账本某月（yyyy-MM）的分类预算列表，未设置时为空列表
+     */
+    fun subscribeMonthCategoryBudgets(
+        bookId: String,
+        typeInfo: String,
+    ): Flow<List<MonthCategoryBudgetDto>>
 
     /**
      * 订阅账单详情

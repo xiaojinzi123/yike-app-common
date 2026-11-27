@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="qianji_widget_budget_desc">本月预算、收支与记账快捷入口</string>
+    <string name="widget_title">预算与收支</string>
+    <string name="widget_open_to_load">请打开应用加载本地账本</string>
+    <string name="widget_preview_title">本月预算</string>
+    <string name="widget_preview_book">日常账本 · 示例</string>
+    <string name="widget_preview_remaining_label">预算剩余</string>
+    <string name="widget_preview_remaining">¥2400.00</string>
+    <string name="widget_preview_total">总预算 ¥4,000.00</string>
+    <string name="widget_preview_progress">已用 40%</string>
+    <string name="widget_preview_expense">支出 ¥1,600.00</string>
+    <string name="widget_preview_income">收入 ¥6,000.00</string>
+    <string name="widget_day_preview_title">今日收支</string>
+    <string name="widget_day_preview_expense_label">今日支出</string>
+    <string name="widget_day_preview_expense">¥128.00</string>
+    <string name="widget_day_preview_income_label">收入</string>
+    <string name="widget_day_preview_income">¥560.00</string>
+    <string name="widget_day_preview_balance_label">结余</string>
+    <string name="widget_day_preview_balance">¥432.00</string>
+    <string name="widget_month_preview_title">本月收支</string>
+    <string name="widget_month_preview_expense_label">本月支出</string>
+    <string name="widget_month_preview_expense">¥3268.50</string>
+    <string name="widget_month_preview_income_label">收入</string>
+    <string name="widget_month_preview_income">¥6800.00</string>
+    <string name="widget_month_preview_balance_label">结余</string>
+    <string name="widget_month_preview_balance">¥3531.50</string>
+    <string name="widget_budget_action">预算管理</string>
+    <string name="widget_add_action">记一笔</string>
+    <string name="widget_view_bills_action">查看账单</string>
+</resources>

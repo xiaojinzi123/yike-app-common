@@ -163,7 +163,6 @@ private fun BookSelect1View(
                             val (
                                 icon, iconSelect,
                                 name,
-                                userName,
                             ) = createRefs()
 
                             Icon(
@@ -226,15 +225,7 @@ private fun BookSelect1View(
                                             anchor = icon.end,
                                             margin = APP_PADDING_NORMAL.dp
                                         )
-                                        if (item.userName == null) {
-                                            this.centerVerticallyTo(other = icon)
-                                        } else {
-                                            this.top.linkTo(anchor = icon.top, margin = 2.dp)
-                                            this.bottom.linkTo(
-                                                anchor = userName.top,
-                                                margin = 2.dp
-                                            )
-                                        }
+                                        this.centerVerticallyTo(other = icon)
                                     }
                                     .nothing(),
                                 text = item.bookName?.contentWithComposable().orEmpty(),
@@ -243,25 +234,6 @@ private fun BookSelect1View(
                                 ),
                                 textAlign = TextAlign.Center,
                             )
-
-                            item.userName?.let {
-                                Text(
-                                    modifier = Modifier
-                                        .constrainAs(ref = userName) {
-                                            this.start.linkTo(
-                                                anchor = name.start,
-                                                margin = 0.dp
-                                            )
-                                            this.top.linkTo(anchor = name.bottom, margin = 2.dp)
-                                        }
-                                        .nothing(),
-                                    text = "用户：${it.contentWithComposable()}",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = MaterialTheme.colorScheme.surfaceTint,
-                                    ),
-                                    textAlign = TextAlign.Center,
-                                )
-                            }
 
                         }
                     }

@@ -1,6 +1,8 @@
 package com.xiaojinzi.tally.module.imagepicker
 
 import android.content.Context
+import android.net.Uri
+import java.io.File
 import android.widget.ImageView
 import coil.imageLoader
 import coil.request.ImageRequest
@@ -14,12 +16,22 @@ import com.luck.picture.lib.utils.ActivityCompatHelper
  * @describe：CoilEngine
  */
 object CoilEngine : ImageEngine {
+    private fun localImage(url: String?): Any? {
+        val value = url?.takeIf { it.isNotBlank() } ?: return null
+        val uri = Uri.parse(value)
+        return when (uri.scheme?.lowercase()) {
+            "content", "file", "android.resource" -> uri
+            null -> File(value).takeIf { it.isAbsolute }
+            else -> null
+        }
+    }
+
     override fun loadImage(context: Context, url: String, imageView: ImageView) {
         if (!ActivityCompatHelper.assertValidRequest(context)) {
             return
         }
         val target = ImageRequest.Builder(context)
-            .data(url)
+            .data(localImage(url))
             .target(imageView)
             .build()
         context.imageLoader.enqueue(target)
@@ -40,7 +52,7 @@ object CoilEngine : ImageEngine {
             if (maxWidth > 0 && maxHeight > 0) {
                 builder.size(maxWidth, maxHeight)
             }
-            imageView?.let { v -> builder.data(url).target(v) }
+            imageView?.let { v -> builder.data(localImage(url)).target(v) }
             val request = builder.build();
             context.imageLoader.enqueue(request)
         }
@@ -52,7 +64,7 @@ object CoilEngine : ImageEngine {
         }
         imageView.scaleType = ImageView.ScaleType.CENTER_CROP
         val target = ImageRequest.Builder(context)
-            .data(url)
+            .data(localImage(url))
             .transformations(RoundedCornersTransformation(8F))
             .size(180, 180)
             .placeholder(com.xiaojinzi.tally.lib.res.R.drawable.res_placeholder1)
@@ -67,7 +79,7 @@ object CoilEngine : ImageEngine {
         }
         imageView.scaleType = ImageView.ScaleType.CENTER_CROP
         val target = ImageRequest.Builder(context)
-            .data(url)
+            .data(localImage(url))
             .size(270, 270)
             .placeholder(com.xiaojinzi.tally.lib.res.R.drawable.res_placeholder1)
             .target(imageView)

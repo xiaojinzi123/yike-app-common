@@ -30,7 +30,6 @@ import com.xiaojinzi.tally.module.base.module.common_bill_list.domain.CommonBill
 import com.xiaojinzi.tally.module.base.spi.TallyDataSourceSpi
 import com.xiaojinzi.tally.module.base.support.AppRouterBaseApi
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
-import com.xiaojinzi.tally.module.base.support.AppRouterUserApi
 import com.xiaojinzi.tally.module.base.support.AppServices
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
@@ -68,7 +67,6 @@ sealed class BillSearchIntent {
 
     data class DoSearch(
         @UiContext val context: Context,
-        val isVipTip: Boolean = false,
     ) : BillSearchIntent()
 
     data class BookSelect(
@@ -218,12 +216,6 @@ interface BillSearchUseCase : BusinessMVIUseCase {
     @StateHotObservable
     val hasImageStateOb: MutableStateFlow<Boolean>
 
-    /**
-     * 是否使用了高级搜索 o
-     */
-    @StateHotObservable
-    val isUseAdvancedSearchStateOb: Flow<Boolean>
-
 }
 
 @OptIn(FlowPreview::class)
@@ -364,22 +356,6 @@ class BillSearchUseCaseImpl(
     override val amountMaxStateOb = MutableStateFlow(value = "")
 
     override val hasImageStateOb = MutableStateFlow(value = false)
-
-    override val isUseAdvancedSearchStateOb = com.xiaojinzi.support.ktx.combine(
-        timeStartStateOb,
-        timeEndStateOb,
-        amountMinStateOb,
-        amountMaxStateOb,
-        categoryIdListStateOb,
-        accountIdListStateOb,
-        labelIdListStateOb,
-        hasImageStateOb,
-    ) { timeStart, timeEnd, amountMin, amountMax, categoryIdList, accountIdList, labelIdList, hasImage ->
-        timeStart != null || timeEnd != null || amountMin.isNotEmpty() || amountMax.isNotEmpty() ||
-                categoryIdList.isNotEmpty() || accountIdList.isNotEmpty() || labelIdList.isNotEmpty() || hasImage
-    }.sharedStateIn(
-        scope = scope,
-    )
 
     @IntentProcess
     private suspend fun yearSelect(intent: BillSearchIntent.YearSelect) {
@@ -674,7 +650,6 @@ class BillSearchUseCaseImpl(
             addIntent(
                 intent = BillSearchIntent.DoSearch(
                     context = intent.context,
-                    isVipTip = true,
                 )
             )
         }
@@ -719,68 +694,18 @@ class BillSearchUseCaseImpl(
     @IntentProcess
 @BusinessMVIUseCase.ErrorIgnore
     private suspend fun doSearch(intent: BillSearchIntent.DoSearch) {
-        val isUseAdvancedSearch =  isUseAdvancedSearchStateOb.first()
-        val isVip = AppServices.userSpi.isVipStateOb.first()
-        if (isUseAdvancedSearch) {
-            if (!isVip) {
-                if (intent.isVipTip) {
-                    confirmDialogOrError(
-                        content = "高级搜索功能需要 VIP 才能使用\n是否开通 VIP?".toStringItemDto(),
-                    )
-                }
-                AppRouterUserApi::class
-                    .routeApi()
-                    .toVipBuyView(
-                        context = intent.context,
-                    )
-                return
-            }
-        }
         val timeRange = yearSelectRangeTimeStateOb.first()
-        val startTime = if (isVip) {
-            timeStartStateOb.first()
-        } else {
-            null
-        }
-        val endTime = if (isVip) {
-            timeEndStateOb.first()
-        } else {
-            null
-        }
+        val startTime = timeStartStateOb.first()
+        val endTime = timeEndStateOb.first()
         val searchKey = searchKeyStateOb.first().text
-        // 账本不卡 vip
         val bookIdList = bookIdListStateOb.first()
         val singleBookId = bookIdList.firstOrNull()
-        val categoryIdList = if (isVip) {
-            categoryIdListStateOb.first()
-        } else {
-            emptyList()
-        }
-        val accountIdList = if (isVip) {
-            accountIdListStateOb.first()
-        } else {
-            emptyList()
-        }
-        val labelIdList = if (isVip) {
-            labelIdListStateOb.first()
-        } else {
-            emptyList()
-        }
-        val amountMin = if (isVip) {
-            amountMinStateOb.first().toLongOrNull()?.times(100)
-        } else {
-            null
-        }
-        val amountMax = if (isVip) {
-            amountMaxStateOb.first().toLongOrNull()?.times(100)
-        } else {
-            null
-        }
-        val hasImage = if (isVip) {
-            hasImageStateOb.first()
-        } else {
-            false
-        }
+        val categoryIdList = categoryIdListStateOb.first()
+        val accountIdList = accountIdListStateOb.first()
+        val labelIdList = labelIdListStateOb.first()
+        val amountMin = amountMinStateOb.first().toLongOrNull()?.times(100)
+        val amountMax = amountMaxStateOb.first().toLongOrNull()?.times(100)
+        val hasImage = hasImageStateOb.first()
         if (startTime != null && endTime != null && startTime > endTime) {
             tip(
                 content = "开始时间不能大于结束时间".toStringItemDto(),

@@ -2,7 +2,6 @@ package com.xiaojinzi.tally.module.base.spi
 
 import com.xiaojinzi.component.anno.ServiceAnno
 import com.xiaojinzi.module.common.base.spi.spPersistence
-import com.xiaojinzi.support.annotation.HotObservable
 import com.xiaojinzi.support.annotation.StateHotObservable
 import com.xiaojinzi.support.ktx.AppScope
 import com.xiaojinzi.support.ktx.MutableSharedStateFlow
@@ -11,22 +10,10 @@ import kotlinx.coroutines.flow.Flow
 interface AppConfigSpi {
 
     /**
-     * 是否同意了隐私协议
-     */
-    @HotObservable(HotObservable.Pattern.BEHAVIOR, isShared = true)
-    val isAgreedPrivacyAgreementStateOb: MutableSharedStateFlow<Boolean>
-
-    /**
      *  是否 引导视图1 显示过了
      */
     @StateHotObservable
     val isShowedGuide1StateOb: Flow<Boolean>
-
-    /**
-     *  是否 AI 记账优先
-     */
-    @StateHotObservable
-    val isAiBillFirstStateOb: Flow<Boolean>
 
     /**
      * 是否显示小时和分钟
@@ -53,12 +40,6 @@ interface AppConfigSpi {
     val isVibrateStateOb: Flow<Boolean>
 
     /**
-     * 是否在 Vip 过期前提醒
-     */
-    @StateHotObservable
-    val isTipBeforeVipExpireStateOb: Flow<Boolean>
-
-    /**
      * 是否资产统计数据可见
      */
     @StateHotObservable
@@ -74,11 +55,6 @@ interface AppConfigSpi {
      * 切换状态
      */
     fun switchShowedGuide1(b: Boolean)
-
-    /**
-     * 切换状态
-     */
-    fun switchAiBillFirst(b: Boolean)
 
     /**
      * 切换状态
@@ -103,11 +79,6 @@ interface AppConfigSpi {
     /**
      * 切换状态
      */
-    fun switchTipBeforeVipExpire(b: Boolean)
-
-    /**
-     * 切换状态
-     */
     fun switchAssetsVisible(b: Boolean)
 
     /**
@@ -120,23 +91,10 @@ interface AppConfigSpi {
 @ServiceAnno(AppConfigSpi::class)
 class AppConfigSpiImpl : AppConfigSpi {
 
-    override val isAgreedPrivacyAgreementStateOb = MutableSharedStateFlow<Boolean>()
-        .spPersistence(
-            key = "isAgreedPrivacyAgreementConfig",
-            def = false,
-        )
-
     override val isShowedGuide1StateOb = MutableSharedStateFlow<Boolean>()
         .spPersistence(
             scope = AppScope,
             key = "isShowedGuide1Config",
-            def = false,
-        )
-
-    override val isAiBillFirstStateOb = MutableSharedStateFlow<Boolean>()
-        .spPersistence(
-            scope = AppScope,
-            key = "isAiBillFirstConfig",
             def = false,
         )
 
@@ -168,13 +126,6 @@ class AppConfigSpiImpl : AppConfigSpi {
             def = true,
         )
 
-    override val isTipBeforeVipExpireStateOb = MutableSharedStateFlow<Boolean>()
-        .spPersistence(
-            scope = AppScope,
-            key = "isTipBeforeVipExpireConfig",
-            def = true,
-        )
-
     override val isAssetsVisibleStateOb = MutableSharedStateFlow<Boolean>()
         .spPersistence(
             scope = AppScope,
@@ -193,10 +144,6 @@ class AppConfigSpiImpl : AppConfigSpi {
         isShowedGuide1StateOb.value = b
     }
 
-    override fun switchAiBillFirst(b: Boolean) {
-        isAiBillFirstStateOb.value = b
-    }
-
     override fun switchShowHourAndMinuteWhenBillCrud(b: Boolean) {
         isShowHourAndMinuteWhenBillCrudStateOb.value = b
     }
@@ -211,10 +158,6 @@ class AppConfigSpiImpl : AppConfigSpi {
 
     override fun switchVibrate(isVibrate: Boolean) {
         isVibrateStateOb.value = isVibrate
-    }
-
-    override fun switchTipBeforeVipExpire(b: Boolean) {
-        isTipBeforeVipExpireStateOb.value = b
     }
 
     override fun switchAssetsVisible(b: Boolean) {

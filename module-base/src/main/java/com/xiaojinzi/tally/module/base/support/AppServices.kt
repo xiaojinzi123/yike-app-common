@@ -1,8 +1,6 @@
 package com.xiaojinzi.tally.module.base.support
 
-import com.xiaojinzi.tally.module.base.spi.AppNetworkSpi
 import com.xiaojinzi.tally.module.base.spi.TallyDataSourceSpi
-import com.xiaojinzi.tally.module.base.spi.UserSpi
 import com.xiaojinzi.component.impl.service.ServiceManager
 import com.xiaojinzi.support.ktx.LogSupport
 import com.xiaojinzi.tally.lib.res.LOG_KEYWORDS_TALLY_DATASOURCE
@@ -12,8 +10,6 @@ import com.xiaojinzi.tally.module.base.spi.AppWidgetSpi
 import com.xiaojinzi.tally.module.base.spi.CoreSpi
 import com.xiaojinzi.tally.module.base.spi.IconMappingSpi
 import com.xiaojinzi.tally.module.base.spi.ImagePickerSpi
-import com.xiaojinzi.tally.module.base.spi.TallyDataSyncSpi
-import com.xiaojinzi.tally.module.base.spi.QrCodeSpi
 import com.xiaojinzi.tally.module.base.spi.SystemSpi
 import com.xiaojinzi.tally.module.base.spi.TallyDataSourceInitSpi
 
@@ -35,14 +31,6 @@ object AppServices {
 
     val iconMappingSpi: IconMappingSpi by lazy {
         ServiceManager.requiredGet(tClass = IconMappingSpi::class)
-    }
-
-    val userSpi: UserSpi by lazy {
-        ServiceManager.requiredGet(tClass = UserSpi::class)
-    }
-
-    val appNetworkSpi: AppNetworkSpi by lazy {
-        ServiceManager.requiredGet(tClass = AppNetworkSpi::class)
     }
 
     val tallyDataSourceInitSpi: TallyDataSourceInitSpi
@@ -76,12 +64,6 @@ object AppServices {
             return _tallyDataSourceSpi!!
         }
 
-    val tallyDataSyncSpi: TallyDataSyncSpi?
-        get() = ServiceManager.get(tClass = TallyDataSyncSpi::class)
-
-    val qrCodeSpi: QrCodeSpi?
-        get() = ServiceManager.get(tClass = QrCodeSpi::class)
-
     val imagePickerSpi: ImagePickerSpi?
         get() = ServiceManager.get(tClass = ImagePickerSpi::class)
 
@@ -90,14 +72,5 @@ object AppServices {
 
     val appWidgetSpi: AppWidgetSpi?
         get() = ServiceManager.get(tClass = AppWidgetSpi::class)
-
-    fun destroySpiAboutTallyDatabase() {
-        LogSupport.d(
-            tag = TAG,
-            content = "destroySpiAboutTallyDatabase",
-            keywords = arrayOf(LOG_KEYWORDS_TALLY_DATASOURCE),
-        )
-        _tallyDataSourceSpi = null
-    }
 
 }

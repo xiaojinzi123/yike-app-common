@@ -61,7 +61,7 @@ import com.xiaojinzi.support.ktx.nothing
 import com.xiaojinzi.support.ktx.toStringItemDto
 import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_NORMAL
 import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_SMALL
-import com.xiaojinzi.tally.module.base.view.compose.AppCommonVipButton
+import com.xiaojinzi.tally.module.base.view.compose.AppCommonActionButton
 import com.xiaojinzi.tally.module.base.view.compose.AppbarNormalM3
 import com.xiaojinzi.tally.module.core.module.account_crud.domain.AccountCrudIntent
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -82,7 +82,6 @@ private fun AccountCrudView(
     BusinessContentView<AccountCrudViewModel>(
         needInit = needInit,
     ) { vm ->
-        val accountCount by vm.accountCountStateOb.collectAsState(initial = null)
         val canEdit by vm.canEditStateOb.collectAsState(initial = false)
         val isEdit by vm.isEditStateOb.collectAsState(initial = false)
         val iconRsd by vm.iconRsdStateOb.collectAsState(initial = null)
@@ -421,7 +420,7 @@ private fun AccountCrudView(
                             )
                         }
                     }
-                    AppCommonVipButton(
+                    AppCommonActionButton(
                         modifier = Modifier
                             .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
                             .weight(weight = 1f, fill = true)
@@ -432,9 +431,6 @@ private fun AccountCrudView(
                                 intent = AccountCrudIntent.Submit,
                             )
                         },
-                        // 是新增并且当前账户不止一个才需要 vip
-                        isVipCheck = !isEdit && accountCount != 0,
-                        vipTipContent = "创建更多资产账户需要开通会员".toStringItemDto(),
                         text = "提交".toStringItemDto()
                     )
                 }

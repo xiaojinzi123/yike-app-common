@@ -14,6 +14,8 @@ import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BillLabelDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BillLabelDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BookDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BookDo
+import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BudgetDao
+import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.BudgetDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.CategoryDao
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.CategoryDo
 import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.LabelDao
@@ -35,10 +37,11 @@ import com.xiaojinzi.tally.module.datasource.storage.db.tally.dao.UserInfoCacheD
         BillImageDo::class,
         BillChatDo::class,
         BillDo::class,
+        BudgetDo::class,
     ],
     views = [
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class TallyDatabase : RoomDatabase() {
@@ -60,5 +63,7 @@ abstract class TallyDatabase : RoomDatabase() {
     abstract fun billChatDao(): BillChatDao
 
     abstract fun billDao(): BillDao
+
+    abstract fun budgetDao(): BudgetDao
 
 }

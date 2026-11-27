@@ -15,15 +15,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -51,15 +57,15 @@ import com.xiaojinzi.support.ktx.format2f
 import com.xiaojinzi.support.ktx.nothing
 import com.xiaojinzi.support.ktx.orNull
 import com.xiaojinzi.support.ktx.toStringItemDto
-import com.xiaojinzi.tally.lib.res.OssProcess
 import com.xiaojinzi.tally.lib.res.model.support.rememberPainter
 import com.xiaojinzi.tally.lib.res.model.tally.TallyBillDto
 import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_NORMAL
-import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_SMALL
-import com.xiaojinzi.tally.lib.res.ui.AppDivider
-import com.xiaojinzi.tally.lib.res.ui.AppHeightSpace
 import com.xiaojinzi.tally.lib.res.ui.AppWidthSpace
 import com.xiaojinzi.tally.module.base.support.AppRouterImagePreviewApi
+import com.xiaojinzi.tally.module.base.theme.PortDesign
+import com.xiaojinzi.tally.module.base.theme.PortPrimaryButton
+import com.xiaojinzi.tally.module.base.theme.PortSecondaryButton
+import com.xiaojinzi.tally.module.base.theme.PortTheme
 import com.xiaojinzi.tally.module.base.view.compose.AppCommonCoilImage
 import com.xiaojinzi.tally.module.base.view.compose.AppbarNormalM3
 import com.xiaojinzi.tally.module.core.module.bill_detail.domain.BillDetailIntent
@@ -75,6 +81,8 @@ private fun BillDetailView(
     needInit: Boolean? = false,
 ) {
     val context = LocalContext.current
+    val isTablet = LocalConfiguration.current.screenWidthDp >= 600
+    val horizontalPadding = if (isTablet) 20.dp else PortDesign.PagePadding
     BusinessContentView<BillDetailViewModel>(
         needInit = needInit,
     ) { vm ->
@@ -88,36 +96,34 @@ private fun BillDetailView(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceColorAtElevation(
-                            elevation = 1.dp,
-                        )
-                    )
+                    .background(color = MaterialTheme.colorScheme.background)
                     .nothing(),
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .nothing(),
+                        .navigationBarsPadding()
+                        .verticalScroll(rememberScrollState())
+                        .padding(bottom = if (canEdit) 96.dp else PortDesign.SectionGap),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
 
-                    AppHeightSpace()
+                    Spacer(Modifier.height(if (isTablet) 24.dp else PortDesign.SectionGap))
 
                     Row(
                         modifier = Modifier
-                            .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
+                            .padding(horizontal = horizontalPadding, vertical = 0.dp)
                             .fillMaxWidth()
                             .wrapContentHeight()
                             .clip(
-                                shape = MaterialTheme.shapes.small,
+                                shape = PortDesign.CardShape,
                             )
                             .background(
                                 color = MaterialTheme.colorScheme.surface,
                             )
                             .padding(
                                 horizontal = APP_PADDING_NORMAL.dp,
-                                vertical = APP_PADDING_NORMAL.dp
+                                vertical = 14.dp
                             )
                             .nothing(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -187,15 +193,15 @@ private fun BillDetailView(
 
                     }
 
-                    AppHeightSpace()
+                    Spacer(Modifier.height(PortDesign.SectionGap))
 
                     Column(
                         modifier = Modifier
-                            .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
+                            .padding(horizontal = horizontalPadding, vertical = 0.dp)
                             .fillMaxWidth()
                             .wrapContentHeight()
                             .clip(
-                                shape = MaterialTheme.shapes.small,
+                                shape = PortDesign.CardShape,
                             )
                             .background(
                                 color = MaterialTheme.colorScheme.surface,
@@ -204,48 +210,19 @@ private fun BillDetailView(
                             .nothing(),
                     ) {
 
-                        billDetailInfo?.userInfoCache?.let { userInfo ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .wrapContentHeight()
-                                    .padding(horizontal = 0.dp, vertical = APP_PADDING_NORMAL.dp)
-                                    .nothing(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                Text(
-                                    text = "创建用户",
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                    ),
-                                    textAlign = TextAlign.Start,
-                                )
-                                Text(
-                                    text = userInfo.name.orEmpty(),
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                    ),
-                                    textAlign = TextAlign.Start,
-                                )
-                            }
-
-                            AppDivider()
-                        }
 
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight()
-                                .padding(horizontal = 0.dp, vertical = APP_PADDING_NORMAL.dp)
+                                .padding(horizontal = 0.dp, vertical = 14.dp)
                                 .nothing(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
                                 text = "时间",
-                                style = MaterialTheme.typography.titleSmall.copy(
+                                style = MaterialTheme.typography.titleMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurface,
                                 ),
                                 textAlign = TextAlign.Start,
@@ -260,20 +237,20 @@ private fun BillDetailView(
                             )
                         }
 
-                        AppDivider()
+                        HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
 
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight()
-                                .padding(horizontal = 0.dp, vertical = APP_PADDING_NORMAL.dp)
+                                .padding(horizontal = 0.dp, vertical = 14.dp)
                                 .nothing(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
                                 text = "账本",
-                                style = MaterialTheme.typography.titleSmall.copy(
+                                style = MaterialTheme.typography.titleMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurface,
                                 ),
                                 textAlign = TextAlign.Start,
@@ -291,19 +268,19 @@ private fun BillDetailView(
                         when (billDetailInfo?.type) {
                             TallyBillDto.Type.NORMAL,
                             TallyBillDto.Type.REFUND -> {
-                                AppDivider()
+                                HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .wrapContentHeight()
-                                        .padding(horizontal = 0.dp, vertical = APP_PADDING_NORMAL.dp)
+                                        .padding(horizontal = 0.dp, vertical = 14.dp)
                                         .nothing(),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                 ) {
                                     Text(
                                         text = "账户",
-                                        style = MaterialTheme.typography.titleSmall.copy(
+                                        style = MaterialTheme.typography.titleMedium.copy(
                                             color = MaterialTheme.colorScheme.onSurface,
                                         ),
                                         textAlign = TextAlign.Start,
@@ -321,19 +298,19 @@ private fun BillDetailView(
                             }
 
                             TallyBillDto.Type.TRANSFER -> {
-                                AppDivider()
+                                HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .wrapContentHeight()
-                                        .padding(horizontal = 0.dp, vertical = APP_PADDING_NORMAL.dp)
+                                        .padding(horizontal = 0.dp, vertical = 14.dp)
                                         .nothing(),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                 ) {
                                     Text(
                                         text = "转出账户",
-                                        style = MaterialTheme.typography.titleSmall.copy(
+                                        style = MaterialTheme.typography.titleMedium.copy(
                                             color = MaterialTheme.colorScheme.onSurface,
                                         ),
                                         textAlign = TextAlign.Start,
@@ -348,19 +325,19 @@ private fun BillDetailView(
                                         textAlign = TextAlign.Start,
                                     )
                                 }
-                                AppDivider()
+                                HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .wrapContentHeight()
-                                        .padding(horizontal = 0.dp, vertical = APP_PADDING_NORMAL.dp)
+                                        .padding(horizontal = 0.dp, vertical = 14.dp)
                                         .nothing(),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                 ) {
                                     Text(
                                         text = "接受账户",
-                                        style = MaterialTheme.typography.titleSmall.copy(
+                                        style = MaterialTheme.typography.titleMedium.copy(
                                             color = MaterialTheme.colorScheme.onSurface,
                                         ),
                                         textAlign = TextAlign.Start,
@@ -380,20 +357,20 @@ private fun BillDetailView(
                             else -> {}
                         }
 
-                        AppDivider()
+                        HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
 
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight()
-                                .padding(horizontal = 0.dp, vertical = APP_PADDING_NORMAL.dp)
+                                .padding(horizontal = 0.dp, vertical = 14.dp)
                                 .nothing(),
                             verticalAlignment = Alignment.Top,
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
                                 text = "标签",
-                                style = MaterialTheme.typography.titleSmall.copy(
+                                style = MaterialTheme.typography.titleMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurface,
                                 ),
                                 textAlign = TextAlign.Start,
@@ -434,14 +411,14 @@ private fun BillDetailView(
                     }
 
                     if (billDetailInfo?.type == TallyBillDto.Type.REFUND) {
-                        AppHeightSpace()
+                        Spacer(Modifier.height(PortDesign.SectionGap))
                         Row(
                             modifier = Modifier
-                                .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
+                                .padding(horizontal = horizontalPadding, vertical = 0.dp)
                                 .fillMaxWidth()
                                 .wrapContentHeight()
                                 .clip(
-                                    shape = MaterialTheme.shapes.small,
+                                    shape = PortDesign.CardShape,
                                 )
                                 .background(
                                     color = MaterialTheme.colorScheme.surface,
@@ -455,7 +432,7 @@ private fun BillDetailView(
                                 }
                                 .padding(
                                     horizontal = APP_PADDING_NORMAL.dp,
-                                    vertical = APP_PADDING_NORMAL.dp
+                                    vertical = 14.dp
                                 )
                                 .nothing(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -463,7 +440,7 @@ private fun BillDetailView(
                         ) {
                             Text(
                                 text = "原订单",
-                                style = MaterialTheme.typography.titleSmall.copy(
+                                style = MaterialTheme.typography.titleMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurface,
                                 ),
                                 textAlign = TextAlign.Start,
@@ -479,14 +456,14 @@ private fun BillDetailView(
                     }
 
                     if (associatedRefundBillDetailListCount > 0) {
-                        AppHeightSpace()
+                        Spacer(Modifier.height(PortDesign.SectionGap))
                         Row(
                             modifier = Modifier
-                                .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
+                                .padding(horizontal = horizontalPadding, vertical = 0.dp)
                                 .fillMaxWidth()
                                 .wrapContentHeight()
                                 .clip(
-                                    shape = MaterialTheme.shapes.small,
+                                    shape = PortDesign.CardShape,
                                 )
                                 .background(
                                     color = MaterialTheme.colorScheme.surface,
@@ -500,7 +477,7 @@ private fun BillDetailView(
                                 }
                                 .padding(
                                     horizontal = APP_PADDING_NORMAL.dp,
-                                    vertical = APP_PADDING_NORMAL.dp
+                                    vertical = 14.dp
                                 )
                                 .nothing(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -508,7 +485,7 @@ private fun BillDetailView(
                         ) {
                             Text(
                                 text = "关联的 $associatedRefundBillDetailListCount 个退款账单",
-                                style = MaterialTheme.typography.titleSmall.copy(
+                                style = MaterialTheme.typography.titleMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurface,
                                 ),
                                 textAlign = TextAlign.Start,
@@ -523,22 +500,22 @@ private fun BillDetailView(
                         }
                     }
 
-                    AppHeightSpace()
+                    Spacer(Modifier.height(PortDesign.SectionGap))
 
                     Text(
                         modifier = Modifier
-                            .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
+                            .padding(horizontal = horizontalPadding, vertical = 0.dp)
                             .fillMaxWidth()
                             .wrapContentHeight()
                             .clip(
-                                shape = MaterialTheme.shapes.small,
+                                shape = PortDesign.CardShape,
                             )
                             .background(
                                 color = MaterialTheme.colorScheme.surface,
                             )
                             .padding(
                                 horizontal = APP_PADDING_NORMAL.dp,
-                                vertical = APP_PADDING_NORMAL.dp
+                                vertical = 14.dp
                             )
                             .nothing(),
                         text = billDetailInfo?.note.orNull() ?: "无备注",
@@ -556,21 +533,21 @@ private fun BillDetailView(
                     )
 
                     if (billImageList.isNotEmpty()) {
-                        AppHeightSpace()
+                        Spacer(Modifier.height(PortDesign.SectionGap))
                         Row(
                             modifier = Modifier
-                                .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
+                                .padding(horizontal = horizontalPadding, vertical = 0.dp)
                                 .fillMaxWidth()
                                 .wrapContentHeight()
                                 .clip(
-                                    shape = MaterialTheme.shapes.small,
+                                    shape = PortDesign.CardShape,
                                 )
                                 .background(
                                     color = MaterialTheme.colorScheme.surface,
                                 )
                                 .padding(
                                     horizontal = APP_PADDING_NORMAL.dp,
-                                    vertical = APP_PADDING_NORMAL.dp
+                                    vertical = 14.dp
                                 )
                                 .nothing(),
                         ) {
@@ -583,7 +560,7 @@ private fun BillDetailView(
                                         .weight(weight = 1f, fill = true)
                                         .aspectRatio(ratio = 1f)
                                         .clip(
-                                            shape = MaterialTheme.shapes.small,
+                                            shape = PortDesign.CardShape,
                                         )
                                         .clickable {
                                             AppRouterImagePreviewApi::class
@@ -603,7 +580,6 @@ private fun BillDetailView(
                                             modifier = Modifier
                                                 .fillMaxSize()
                                                 .nothing(),
-                                            cosImageProcess = OssProcess.THUMBNAIL400,
                                             imageRes = item.url,
                                         )
                                     }
@@ -618,55 +594,34 @@ private fun BillDetailView(
                         modifier = Modifier
                             .align(alignment = Alignment.BottomCenter)
                             .navigationBarsPadding()
-                            .padding(bottom = APP_PADDING_SMALL.dp)
                             .fillMaxWidth()
-                            .wrapContentHeight()
-                            .nothing(),
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(horizontal = horizontalPadding, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(PortDesign.SectionGap),
                     ) {
-                        Text(
+                        PortSecondaryButton(
                             modifier = Modifier
                                 .weight(weight = 2f, fill = true)
-                                .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
-                                .circleClip()
-                                .clickable {
-                                    vm.addIntent(
-                                        intent = BillDetailIntent.ToDeleteBill,
-                                    )
-                                }
-                                .background(
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                                .padding(horizontal = 0.dp, vertical = APP_PADDING_NORMAL.dp)
-                                .nothing(),
+                                .heightIn(min = PortDesign.ButtonHeight),
                             text = "删除",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                color = MaterialTheme.colorScheme.onError,
-                            ),
-                            textAlign = TextAlign.Center,
-                        )
-                        Text(
-                            modifier = Modifier
-                                .weight(weight = 3f, fill = true)
-                                .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
-                                .circleClip()
-                                .clickable {
-                                    vm.addIntent(
-                                        intent = BillDetailIntent.ToEditBill(
-                                            context = context,
-                                        ),
-                                    )
-                                }
-                                .background(
-                                    color = MaterialTheme.colorScheme.primary,
+                            destructive = true,
+                            onClick = {
+                                vm.addIntent(
+                                    intent = BillDetailIntent.ToDeleteBill,
                                 )
-                                .padding(horizontal = 0.dp, vertical = APP_PADDING_NORMAL.dp)
-                                .nothing(),
+                            },
+                        )
+                        PortPrimaryButton(
+                            modifier = Modifier.weight(weight = 3f, fill = true),
                             text = "编辑",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                color = MaterialTheme.colorScheme.onPrimary,
-                            ),
-                            textAlign = TextAlign.Center,
+                            onClick = {
+                                vm.addIntent(
+                                    intent = BillDetailIntent.ToEditBill(
+                                        context = context,
+                                    ),
+                                )
+                            },
                         )
                     }
                 }
@@ -686,7 +641,9 @@ fun BillDetailViewWrap() {
     val vm: BillDetailViewModel = viewModel()
     val billDetailVo by vm.billDetailStateObVo.collectAsState(null)
     val isSupportRefund by vm.isSupportRefundState.collectAsState(initial = false)
-    Scaffold(
+    PortTheme {
+        Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             AppbarNormalM3(
                 title = when (billDetailVo?.type) {
@@ -718,6 +675,7 @@ fun BillDetailViewWrap() {
             BillDetailView()
         }
     }
+    }
 }
 
 @InternalCoroutinesApi
@@ -727,7 +685,9 @@ fun BillDetailViewWrap() {
 @Preview
 @Composable
 private fun BillDetailViewPreview() {
-    BillDetailView(
-        needInit = false,
-    )
+    PortTheme {
+        BillDetailView(
+            needInit = false,
+        )
+    }
 }

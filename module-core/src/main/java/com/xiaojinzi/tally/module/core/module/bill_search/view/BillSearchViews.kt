@@ -97,7 +97,6 @@ import com.xiaojinzi.tally.lib.res.ui.AppBackgroundColor
 import com.xiaojinzi.tally.lib.res.ui.AppWidthSpace
 import com.xiaojinzi.tally.lib.res.ui.startShape
 import com.xiaojinzi.tally.module.base.module.common_bill_list.view.CommonBillListView
-import com.xiaojinzi.tally.module.base.support.AppServices
 import com.xiaojinzi.tally.module.base.support.DevelopHelper
 import com.xiaojinzi.tally.module.core.module.bill_search.domain.BillSearchIntent
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -115,13 +114,11 @@ private fun BillSearchConditionView(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val isVip by AppServices.userSpi.isVipStateOb.collectAsState(initial = false)
     val bookInfoList by vm.bookInfoListStateOb.collectAsState(initial = emptyList())
     val categoryInfoList by vm.categoryInfoListStateOb.collectAsState(initial = emptyList())
     val accountInfoList by vm.accountInfoListStateOb.collectAsState(initial = emptyList())
     val labelInfoList by vm.labelInfoListStateOb.collectAsState(initial = emptyList())
     val hasImage by vm.hasImageStateOb.collectAsState(initial = false)
-    val isUseAdvancedSearch by vm.isUseAdvancedSearchStateOb.collectAsState(initial = false)
     Column(
         modifier = Modifier
             .fillMaxWidth(
@@ -1046,15 +1043,7 @@ private fun BillSearchConditionView(
                 },
             ) {
                 Text(
-                    text = if (isUseAdvancedSearch) {
-                        if (isVip) {
-                            "确认"
-                        } else {
-                            "升级 Vip"
-                        }
-                    } else {
-                        "确认"
-                    },
+                    text = "确认",
                     textAlign = TextAlign.Start,
                 )
             }

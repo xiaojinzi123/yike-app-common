@@ -21,6 +21,7 @@ import com.xiaojinzi.tally.lib.res.model.tally.TallyCategoryDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyCategoryInsertDto
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
 import com.xiaojinzi.tally.module.base.support.AppServices
+import com.xiaojinzi.tally.module.base.support.LocalLedgerIdentity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -135,11 +136,8 @@ class CategoryCrudUseCaseImpl(
     override val isEditStateOb = editInfoStateOb
         .map { it != null }
 
-    override val canDeleteStateOb = combine(
-        AppServices.userSpi.latestUserIdStateOb,
-        editInfoStateOb,
-    ) { selfUserId, categoryInfo ->
-        selfUserId != null && selfUserId == categoryInfo?.userId
+    override val canDeleteStateOb = editInfoStateOb.map { categoryInfo ->
+        categoryInfo?.getAdapter != null
     }
 
     override val parentIdStateOb = MutableSharedStateFlow<String?>(
@@ -252,9 +250,6 @@ class CategoryCrudUseCaseImpl(
 
     @IntentProcess
     private suspend fun submit(intent: CategoryCrudIntent.Submit) {
-        val userId = AppServices
-            .userSpi
-            .requiredLastUserId()
         val bookInfo = AppServices.tallyDataSourceSpi.selectedBookStateOb.firstOrNull()
             ?: throw NoBookSelectException()
         val iconName = iconNameStateOb.firstOrNull()
@@ -278,7 +273,7 @@ class CategoryCrudUseCaseImpl(
             if (editInfo == null) {
                 this.insertCategory(
                     target = TallyCategoryInsertDto(
-                        userId = userId,
+                        userId = LocalLedgerIdentity.requiredId(),
                         bookId = bookInfo.id,
                         parentId = parentId,
                         type = type.dbStr,

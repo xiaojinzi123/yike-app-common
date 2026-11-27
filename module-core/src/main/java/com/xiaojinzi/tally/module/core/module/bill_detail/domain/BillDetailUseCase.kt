@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 sealed class BillDetailIntent {
 
@@ -132,22 +133,12 @@ class BillDetailUseCaseImpl(
             scope = scope,
         )
 
-    override val canEditStateOb = combine(
-        AppServices.userSpi.latestUserIdStateOb,
-        billDetailStateOb,
-    ) { userId, billDetail ->
-        userId != null && userId == billDetail?.core?.userId
+    override val canEditStateOb = billDetailStateOb.map { billDetail ->
+        billDetail?.core?.getAdapter != null
     }
 
-    override val isSupportRefundState = combine(
-        AppServices.userSpi.latestUserIdStateOb,
-        billDetailStateOb,
-    ) { userId, billDetail ->
-        if (userId .isNullOrEmpty()) {
-            false
-        } else {
-            billDetail?.core?.userCanRefund(targetUserId = userId)?: false
-        }
+    override val isSupportRefundState = billDetailStateOb.map { billDetail ->
+        billDetail?.core?.getAdapter?.canRefundWithType ?: false
     }
 
     override val billImageListStateOb = combine(

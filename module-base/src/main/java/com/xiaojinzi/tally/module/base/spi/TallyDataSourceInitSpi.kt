@@ -16,9 +16,4 @@ interface TallyDataSourceInitSpi {
      */
     suspend fun initTallyDataBase(userId: String)
 
-    /**
-     * 销毁记账的数据库
-     */
-    suspend fun destroyTallyDataBase()
-
 }

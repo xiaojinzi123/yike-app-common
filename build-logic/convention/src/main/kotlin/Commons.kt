@@ -1,4 +1,3 @@
-import com.android.build.api.dsl.BuildType
 import com.android.build.api.dsl.CommonExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
@@ -10,13 +9,13 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 internal val Project.libs
     get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
-fun CommonExtension<*, BuildType, *, *, *, *>.basicConfig(project: Project) {
+fun CommonExtension.basicConfig(project: Project) {
     compileSdk = project.libs.findVersion("compileSdk").get().toString().toInt()
-    defaultConfig {
+    defaultConfig.apply {
         minSdk = project.libs.findVersion("minSdk").get().toString().toInt()
     }
-    buildTypes {
-        debug {
+    buildTypes.apply {
+        getByName("debug").apply {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -27,12 +26,10 @@ fun CommonExtension<*, BuildType, *, *, *, *>.basicConfig(project: Project) {
                     ?.toString()
                     ?: "false").toBoolean()
             ) {
-                sourceSets {
-                    this.getAt("debug").kotlin.srcDirs("./build/generated/ksp/debug/kotlin")
-                }
+                sourceSets.getByName("debug").kotlin.srcDirs("./build/generated/ksp/debug/kotlin")
             }
         }
-        release {
+        getByName("release").apply {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -40,7 +37,7 @@ fun CommonExtension<*, BuildType, *, *, *, *>.basicConfig(project: Project) {
             )
         }
     }
-    compileOptions {
+    compileOptions.apply {
         sourceCompatibility(JavaVersion.VERSION_17)
         targetCompatibility(JavaVersion.VERSION_17)
     }
@@ -57,7 +54,7 @@ fun CommonExtension<*, BuildType, *, *, *, *>.basicConfig(project: Project) {
             )
         }
     }
-    composeOptions {
+    composeOptions.apply {
         kotlinCompilerExtensionVersion = "1.5.15"
     }
 }

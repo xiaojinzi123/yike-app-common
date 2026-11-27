@@ -3,10 +3,6 @@
 
     <application>
         <activity
-            android:name=".module.first_sync.view.FirstSyncAct"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
             android:name=".module.label_info.view.LabelInfoAct"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustNothing" />
@@ -53,14 +49,6 @@
         <activity
             android:name=".module.book_select1.view.BookSelect1Act"
             android:theme="@style/Theme.Tally.App.Transparent"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.book_member.view.BookMemberAct"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.book_invite.view.BookInviteAct"
-            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustNothing" />
         <activity
             android:name=".module.account_info.view.AccountInfoAct"
@@ -117,34 +105,6 @@
         <activity
             android:name=".module.bill_album.view.BillAlbumAct"
             android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.bill_cycle.view.BillCycleAct"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.bill_cycle_crud.view.BillCycleCrudAct"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.bill_cycle_crud.sub_module.repeat_count.view.RepeatCountAct"
-            android:theme="@style/Theme.Tally.App.Transparent"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.bill_cycle_crud.sub_module.note.view.BillCycleNoteAct"
-            android:theme="@style/Theme.Tally.App.Transparent"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.sync_log.view.SyncLogAct"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.ai_bill_chat.view.AiBillChatAct"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".module.ai_bill_create.view.AiBillCreateAct"
-            android:theme="@style/Theme.Tally.App.Transparent"
             android:windowSoftInputMode="adjustNothing" />
     </application>
 

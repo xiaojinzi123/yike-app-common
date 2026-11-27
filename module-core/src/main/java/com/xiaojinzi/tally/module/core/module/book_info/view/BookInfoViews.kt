@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,9 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Add
@@ -44,7 +41,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.xiaojinzi.component.impl.routeApi
 import com.xiaojinzi.reactive.template.view.BusinessContentView
 import com.xiaojinzi.support.compose.util.circleClip
@@ -81,7 +77,7 @@ private fun BookItemView(
     ) {
         val (
             textCurrentUse,
-            icon, nameValue, textIsSystem, peopleView,
+            icon, nameValue,
             totalSpendingName, totalSpendingValue,
             totalIncomeName, totalIncomeValue,
             totalBillCountValue, textCreateTimeValue,
@@ -151,72 +147,6 @@ private fun BookItemView(
             ),
             textAlign = TextAlign.Start,
         )
-
-        if (item.isSystem) {
-            Text(
-                modifier = Modifier
-                    .constrainAs(ref = textIsSystem) {
-                        this.centerVerticallyTo(other = nameValue)
-                        this.start.linkTo(anchor = nameValue.end, margin = APP_PADDING_SMALL.dp)
-                    }
-                    .nothing(),
-                text = "(系统账本)",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = MaterialTheme.colorScheme.surfaceTint,
-                ),
-                textAlign = TextAlign.Start,
-            )
-        }
-
-        item.userInfo?.let { userInfo ->
-            Row(
-                modifier = Modifier
-                    .constrainAs(ref = peopleView) {
-                        if (item.isSystem) {
-                            this.start.linkTo(
-                                anchor = textIsSystem.end,
-                                margin = APP_PADDING_NORMAL.dp,
-                            )
-                        } else {
-                            this.start.linkTo(
-                                anchor = nameValue.end,
-                                margin = APP_PADDING_NORMAL.dp,
-                            )
-                        }
-                        this.centerVerticallyTo(other = icon)
-                    }
-                    .wrapContentSize()
-                    .nothing(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    modifier = Modifier
-                        .size(size = 12.dp)
-                        .nothing(),
-                    painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_people1),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary.copy(
-                        alpha = 0.5f,
-                    ),
-                )
-                Spacer(
-                    modifier = Modifier
-                        .width(width = 4.dp)
-                        .nothing()
-                )
-                Text(
-                    modifier = Modifier
-                        .nothing(),
-                    text = userInfo.name.orEmpty(),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = MaterialTheme.colorScheme.primary.copy(
-                            alpha = 0.5f,
-                        ),
-                    ),
-                    textAlign = TextAlign.Start,
-                )
-            }
-        }
 
         Text(
             modifier = Modifier
@@ -332,7 +262,7 @@ private fun BookItemView(
                 modifier = Modifier
                     .nothing(),
                 painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_more3),
-                contentDescription = null,
+                contentDescription = "账本操作",
                 tint = MaterialTheme.colorScheme.outline,
             )
         }
@@ -429,17 +359,10 @@ private fun BookInfoView(
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 fun BookInfoViewWrap() {
     val context = LocalContext.current
-    val vm: BookInfoViewModel = viewModel()
     Scaffold(
         topBar = {
             AppbarNormalM3(
                 title = "账本管理".toStringItemDto(),
-                menu1IconRsd = com.xiaojinzi.tally.lib.res.R.drawable.res_scan_code1,
-                menu1ClickListener = {
-                    vm.addIntent(
-                        BookInfoIntent.ScanQrCodeAndJoinBook,
-                    )
-                },
             )
         },
         floatingActionButton = {

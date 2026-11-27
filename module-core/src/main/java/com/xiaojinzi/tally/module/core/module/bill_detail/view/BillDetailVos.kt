@@ -6,13 +6,11 @@ import com.xiaojinzi.tally.lib.res.model.support.LocalImageItemDto
 import com.xiaojinzi.tally.lib.res.model.tally.MoneyYuan
 import com.xiaojinzi.tally.lib.res.model.tally.TallyBillDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyLabelDto
-import com.xiaojinzi.tally.lib.res.model.user.UserInfoCacheDto
 
 @Keep
 data class BillDetailVo(
     val billId: String?,
     val type: TallyBillDto.Type?,
-    val userInfoCache: UserInfoCacheDto?,
     val bookName: StringItemDto?,
     val categoryImage: LocalImageItemDto?,
     val categoryName: StringItemDto?,

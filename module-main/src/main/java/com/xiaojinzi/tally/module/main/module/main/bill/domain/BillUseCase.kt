@@ -13,6 +13,7 @@ import com.xiaojinzi.support.annotation.ViewModelLayer
 import com.xiaojinzi.support.ktx.getMonthInterval
 import com.xiaojinzi.support.ktx.sharedStateIn
 import com.xiaojinzi.tally.lib.res.model.tally.MoneyFen
+import com.xiaojinzi.tally.lib.res.model.tally.TallyBillDto
 import com.xiaojinzi.tally.module.base.module.common_bill_list.domain.CommonBillQueryConditionUseCase
 import com.xiaojinzi.tally.module.base.module.common_bill_list.domain.CommonBillQueryConditionUseCaseImpl
 import com.xiaojinzi.tally.module.base.spi.TallyDataSourceSpi
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import java.util.Calendar
+import java.util.Locale
 import kotlin.math.absoluteValue
 
 sealed class BillIntent {
@@ -70,6 +72,27 @@ interface BillUseCase : BusinessMVIUseCase {
     @StateHotObservable
     val currentMonthBalanceStateOb: Flow<MoneyFen>
 
+    /**
+     * 当月预算总额（钱迹口径，yyyy-MM），未设置为 0
+     */
+    @StateHotObservable
+    val currentMonthBudgetStateOb: Flow<MoneyFen>
+
+    /**
+     * 当月分类预算与已花（首页超支提示用）
+     */
+    @StateHotObservable
+    val currentMonthCategoryBudgetStateOb: Flow<List<CategoryBudgetProgress>>
+
+}
+
+/** 分类预算进度，金额单位：分 */
+data class CategoryBudgetProgress(
+    val categoryId: String,
+    val budgetFen: Long,
+    val spentFen: Long,
+) {
+    val isOver: Boolean get() = spentFen > budgetFen
 }
 
 @ViewModelLayer
@@ -149,6 +172,98 @@ class BillUseCaseImpl(
         currentMonthIncomeStateOb
     ) { spending, income ->
         income - spending
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val currentMonthBudgetStateOb = combine(
+        timeSelectUseCase.selectedYearStateOb,
+        timeSelectUseCase.selectedMonthStateOb,
+        AppServices.tallyDataSourceSpi.selectedBookStateOb,
+    ) { year, month, book ->
+        Triple(year, month, book)
+    }.flatMapLatest { (year, month, book) ->
+        if (book == null) {
+            flowOf(value = MoneyFen())
+        } else {
+            AppServices
+                .tallyDataSourceSpi
+                .subscribeMonthTotalBudget(
+                    bookId = book.id,
+                    typeInfo = String.format(Locale.CHINA, "%04d-%02d", year, month + 1),
+                )
+        }
+    }.sharedStateIn(
+        scope = scope,
+    )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val currentMonthCategoryBudgetStateOb = combine(
+        timeRangeStateOb,
+        AppServices.tallyDataSourceSpi.selectedBookStateOb,
+    ) { timeRange, book ->
+        timeRange to book
+    }.flatMapLatest { (timeRange, book) ->
+        if (book == null) {
+            flowOf(emptyList())
+        } else {
+            combine(
+                AppServices.tallyDataSourceSpi.subscribeMonthCategoryBudgets(
+                    bookId = book.id,
+                    typeInfo = monthTypeInfo(timeMs = timeRange.first),
+                ),
+                AppServices.tallyDataSourceSpi.subscribeAllCategory(bookIdList = listOf(book.id)),
+            ) { budgets, categories -> budgets to categories }
+                .flatMapLatest { (budgets, categories) ->
+                    if (budgets.isEmpty()) {
+                        flowOf(emptyList())
+                    } else {
+                        combine(
+                            budgets.map { budget ->
+                                AppServices
+                                    .tallyDataSourceSpi
+                                    .subscribeBillAmountByCondition(
+                                        queryCondition = TallyDataSourceSpi.Companion.BillQueryConditionDto(
+                                            typeList = listOf(
+                                                TallyBillDto.Type.NORMAL,
+                                                TallyBillDto.Type.REFUND,
+                                            ),
+                                            bookIdList = listOf(book.id),
+                                            categoryIdList = (listOf(budget.categoryId) + categories
+                                                .filter { it.parentId == budget.categoryId }
+                                                .map { it.id }).distinct(),
+                                            startTimeInclude = timeRange.first,
+                                            endTimeInclude = timeRange.second - 1,
+                                            amountLessThanZero = true,
+                                            isNotCalculate = false,
+                                        )
+                                    )
+                                    .map { amount ->
+                                        CategoryBudgetProgress(
+                                            categoryId = budget.categoryId,
+                                            budgetFen = budget.amount,
+                                            spentFen = amount.value.absoluteValue,
+                                        )
+                                    }
+                            }
+                        ) { progress ->
+                            progress.toList()
+                        }
+                    }
+                }
+        }
+    }.sharedStateIn(
+        scope = scope,
+    )
+
+    private fun monthTypeInfo(timeMs: Long): String {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = timeMs
+        return String.format(
+            Locale.CHINA,
+            "%04d-%02d",
+            calendar[Calendar.YEAR],
+            calendar[Calendar.MONTH] + 1,
+        )
     }
 
     @IntentProcess

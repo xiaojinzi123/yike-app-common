@@ -3,7 +3,6 @@ package com.xiaojinzi.tally.module.core.module.bill_image_crud.view
 import android.annotation.SuppressLint
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -34,11 +33,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
+import com.xiaojinzi.tally.module.base.view.compose.AppCommonCoilImage
 import com.xiaojinzi.reactive.template.view.BusinessContentView
 import com.xiaojinzi.support.compose.BottomView
 import com.xiaojinzi.support.compose.util.circleClip
@@ -51,7 +49,7 @@ import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_SMALL
 import com.xiaojinzi.tally.lib.res.ui.AppHeightSpace
 import com.xiaojinzi.tally.lib.res.ui.AppWidthSpace
 import com.xiaojinzi.tally.lib.res.ui.topShape
-import com.xiaojinzi.tally.module.base.view.compose.AppCommonVipButton
+import com.xiaojinzi.tally.module.base.view.compose.AppCommonActionButton
 import com.xiaojinzi.tally.module.core.module.bill_image_crud.domain.BillImageCrudIntent
 import com.xiaojinzi.tally.module.core.module.bill_image_crud.domain.BillImageCrudUseCase
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -131,14 +129,11 @@ private fun BillImageCrudView(
                                 .nothing(),
                         ) {
                             imageList.getOrNull(index = index)?.let { item ->
-                                Image(
+                                AppCommonCoilImage(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .nothing(),
-                                    painter = rememberAsyncImagePainter(
-                                        model = item.url.orNull() ?: item.localUri
-                                    ),
-                                    contentDescription = null,
+                                    imageRes = item.url.orNull() ?: item.localUri,
                                     contentScale = ContentScale.Crop,
                                 )
                                 Box(
@@ -172,20 +167,6 @@ private fun BillImageCrudView(
                                         tint = MaterialTheme.colorScheme.onError,
                                     )
                                 }
-                                if (item.url.isNullOrEmpty()) {
-                                    Icon(
-                                        modifier = Modifier
-                                            .align(
-                                                alignment = Alignment.BottomEnd,
-                                            )
-                                            .padding(horizontal = 6.dp, vertical = 6.dp)
-                                            .size(size = 20.dp)
-                                            .nothing(),
-                                        painter = painterResource(id = com.xiaojinzi.tally.lib.res.R.drawable.res_upload1),
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurface,
-                                    )
-                                }
                             } ?: run {
                                 Box(
                                     modifier = Modifier
@@ -215,7 +196,7 @@ private fun BillImageCrudView(
                 }
                 AppHeightSpace()
 
-                AppCommonVipButton(
+                AppCommonActionButton(
                     modifier = Modifier
                         .padding(bottom = APP_PADDING_NORMAL.dp)
                         .navigationBarsPadding()

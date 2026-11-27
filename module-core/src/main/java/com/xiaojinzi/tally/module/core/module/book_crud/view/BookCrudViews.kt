@@ -32,12 +32,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.xiaojinzi.reactive.template.view.BusinessContentView
 import com.xiaojinzi.support.compose.util.circleClip
 import com.xiaojinzi.support.ktx.nothing
@@ -47,9 +47,10 @@ import com.xiaojinzi.tally.lib.res.ui.APP_PADDING_SMALL
 import com.xiaojinzi.tally.lib.res.ui.AppBackgroundColor
 import com.xiaojinzi.tally.lib.res.ui.AppHeightSpace
 import com.xiaojinzi.tally.module.base.support.AppServices
-import com.xiaojinzi.tally.module.base.view.compose.AppCommonVipButton
+import com.xiaojinzi.tally.module.base.view.compose.AppCommonActionButton
 import com.xiaojinzi.tally.module.base.view.compose.AppbarNormalM3
 import com.xiaojinzi.tally.module.core.module.book_crud.domain.BookCrudIntent
+import com.xiaojinzi.tally.module.core.module.book_crud.domain.BookTemplate
 import kotlinx.coroutines.InternalCoroutinesApi
 
 @InternalCoroutinesApi
@@ -60,14 +61,14 @@ import kotlinx.coroutines.InternalCoroutinesApi
 private fun BookCrudView(
     needInit: Boolean? = null,
 ) {
-    val context = LocalContext.current
     BusinessContentView<BookCrudViewModel>(
         needInit = needInit,
     ) { vm ->
 
+        val isEdit by vm.isEditStateOb.collectAsState(initial = false)
         val bookName by vm.bookNameStateOb.collectAsState(initial = "")
-        val bookTypeList by vm.bookTypeListStateOb.collectAsState(initial = emptyList())
-        val bookTypeSelected by vm.bookTypeSelectedStateOb.collectAsState(initial = null)
+        val bookTypeList: List<BookTemplate> by vm.bookTypeListStateOb.collectAsState(initial = emptyList())
+        val bookTypeSelected: BookTemplate? by vm.bookTypeSelectedStateOb.collectAsState(initial = null)
 
         Column(
             modifier = Modifier
@@ -108,6 +109,7 @@ private fun BookCrudView(
                     .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = APP_PADDING_NORMAL.dp)
                     .nothing(),
                 value = bookName,
+                singleLine = true,
                 cursorBrush = SolidColor(
                     value = MaterialTheme.colorScheme.primary,
                 ),
@@ -115,7 +117,7 @@ private fun BookCrudView(
                     color = MaterialTheme.colorScheme.onSurface,
                 ),
                 onValueChange = {
-                    vm.bookNameStateOb.value = it.trim().take(6)
+                    vm.bookNameStateOb.value = it.take(maxOf(20, bookName.length))
                 },
             ) {
                 Box(
@@ -138,18 +140,6 @@ private fun BookCrudView(
                             textAlign = TextAlign.Start,
                         )
                     }
-                    Text(
-                        modifier = Modifier
-                            .align(alignment = Alignment.CenterEnd)
-                            .nothing(),
-                        text = "${bookName.length}/6",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface.copy(
-                                alpha = 0.5f,
-                            )
-                        ),
-                        textAlign = TextAlign.Start,
-                    )
                     it.invoke()
                 }
 
@@ -162,7 +152,7 @@ private fun BookCrudView(
                     .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = 0.dp)
                     .wrapContentSize()
                     .nothing(),
-                text = "账本类型",
+                text = if (isEdit) "保存后将保留原有分类和账单" else "账本模板",
                 style = MaterialTheme.typography.titleSmall.copy(
                     color = MaterialTheme.colorScheme.onSurface,
                 ),
@@ -178,7 +168,7 @@ private fun BookCrudView(
                     .weight(weight = 1f, fill = true)
                     .nothing(),
             ) {
-                bookTypeList.forEachIndexed { index, item ->
+                (if (isEdit) emptyList() else bookTypeList).forEach { item ->
                     val isSelected = item == bookTypeSelected
                     item {
                         ConstraintLayout(
@@ -281,9 +271,9 @@ private fun BookCrudView(
                                         )
                                     }
                                     .nothing(),
-                                text = item.desc.orEmpty(),
+                                text = item.description,
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 ),
                                 textAlign = TextAlign.Start,
                             )
@@ -292,14 +282,14 @@ private fun BookCrudView(
                 }
             }
 
-            AppCommonVipButton(
+            AppCommonActionButton(
                 modifier = Modifier
                     .navigationBarsPadding()
                     .padding(horizontal = APP_PADDING_NORMAL.dp, vertical = APP_PADDING_NORMAL.dp)
                     .fillMaxWidth()
                     .wrapContentHeight()
                     .nothing(),
-                text = "创建".toStringItemDto(),
+                text = (if (isEdit) "保存" else "创建账本").toStringItemDto(),
                 onClick = {
                     vm.addIntent(
                         intent = BookCrudIntent.Submit,
@@ -318,10 +308,12 @@ private fun BookCrudView(
 @Composable
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 fun BookCrudViewWrap() {
+    val vm: BookCrudViewModel = viewModel()
+    val isEdit by vm.isEditStateOb.collectAsState(initial = false)
     Scaffold(
         topBar = {
             AppbarNormalM3(
-                title = "创建账本".toStringItemDto(),
+                title = (if (isEdit) "编辑账本" else "创建账本").toStringItemDto(),
             )
         }
     ) {

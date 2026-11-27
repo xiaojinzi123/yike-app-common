@@ -16,19 +16,19 @@ import com.xiaojinzi.support.ktx.getActivity
 import com.xiaojinzi.support.ktx.toStringItemDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyBookDto
 import com.xiaojinzi.tally.module.base.support.AppServices
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 
 sealed class BookSelectIntent {
-
-    data object Submit : BookSelectIntent()
 
     data class ParameterInit(
         val maxCount: Int? = null,
         val bookIdSelectList: Set<String>,
-    )
+    ) : BookSelectIntent()
 
     data class SwitchBook(
         val bookId: String,
@@ -78,16 +78,8 @@ class BookSelectUseCaseImpl(
         initValue = null,
     )
 
-    override val allBookStateOb = combine(
-        AppServices.userSpi.latestUserIdStateOb,
-        AppServices
-            .tallyDataSourceSpi
-            .allBookStateOb,
-    ) { userId, bookList ->
-        val (list1, list2) = bookList.partition {
-            it.userId == userId
-        }
-        list1.sortedBy { it.timeCreate } + list2.sortedBy { it.timeCreate }
+    override val allBookStateOb = AppServices.tallyDataSourceSpi.allBookStateOb.map { bookList ->
+        bookList.sortedBy { it.timeCreate }
     }
 
     override val bookIdSelectListStateOb = MutableSharedStateFlow<Set<String>>(
@@ -96,16 +88,20 @@ class BookSelectUseCaseImpl(
 
     @IntentProcess
     private suspend fun parameterInit(intent: BookSelectIntent.ParameterInit) {
-        maxSelectCountStateOb.emit(
-            value = intent.maxCount,
-        )
+        val maxCount = intent.maxCount?.coerceAtLeast(1)
+        val bookIds = withContext(Dispatchers.IO) {
+            AppServices.tallyDataSourceSpi.getAllBookList().map { it.id }.toSet()
+        }
+        val selectedIds = intent.bookIdSelectList.intersect(bookIds)
+        maxSelectCountStateOb.emit(value = maxCount)
         bookIdSelectListStateOb.emit(
-            value = intent.bookIdSelectList,
+            value = if (maxCount == null) selectedIds else selectedIds.take(maxCount).toSet(),
         )
     }
 
     @IntentProcess
     private suspend fun selectBook(intent: BookSelectIntent.SelectBook) {
+        if (AppServices.tallyDataSourceSpi.getBookById(id = intent.bookId) == null) return
         val maxCount = maxSelectCountStateOb.firstOrNull()
         bookIdSelectListStateOb.emit(
             value = bookIdSelectListStateOb.first().toMutableSet().apply {
@@ -131,6 +127,10 @@ class BookSelectUseCaseImpl(
 
     @IntentProcess
     private suspend fun switchBook(intent: BookSelectIntent.SwitchBook) {
+        if (AppServices.tallyDataSourceSpi.getBookById(id = intent.bookId) == null) {
+            tip(content = "账本不存在".toStringItemDto())
+            return
+        }
         AppServices
             .tallyDataSourceSpi
             .switchBook(
@@ -142,6 +142,10 @@ class BookSelectUseCaseImpl(
 
     @IntentProcess
     private suspend fun returnSelectList(intent: BookSelectIntent.ReturnSelectList) {
+        val bookIds = withContext(Dispatchers.IO) {
+            AppServices.tallyDataSourceSpi.getAllBookList().map { it.id }.toSet()
+        }
+        val selectedIds = bookIdSelectListStateOb.first().intersect(bookIds)
         intent
             .context
             .getActivity()?.run {
@@ -150,7 +154,7 @@ class BookSelectUseCaseImpl(
                     Intent().apply {
                         this.putStringArrayListExtra(
                             "data", ArrayList(
-                                bookIdSelectListStateOb.first(),
+                                selectedIds,
                             )
                         )
                     }

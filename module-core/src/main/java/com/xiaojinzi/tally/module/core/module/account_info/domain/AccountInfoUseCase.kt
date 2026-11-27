@@ -11,7 +11,6 @@ import com.xiaojinzi.support.annotation.StateHotObservable
 import com.xiaojinzi.support.annotation.ViewModelLayer
 import com.xiaojinzi.support.ktx.sharedStateIn
 import com.xiaojinzi.tally.lib.res.model.tally.MoneyYuan
-import com.xiaojinzi.tally.lib.res.model.user.UserInfoCacheDto
 import com.xiaojinzi.tally.module.base.support.AppServices
 import com.xiaojinzi.tally.module.base.support.TallyDataSourceHelper
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,7 +23,6 @@ data class AccountInfoUseCaseDto(
     @DrawableRes
     val iconRsd: Int?,
     val name: String?,
-    val userCacheInfo: UserInfoCacheDto?,
     val balanceInit: MoneyYuan,
     val balanceCurrent: MoneyYuan,
     val isExcluded: Boolean,
@@ -75,11 +73,6 @@ class AccountInfoUseCaseImpl(
                     id = item.id,
                     iconRsd = AppServices.iconMappingSpi[item.iconName],
                     name = item.name,
-                    userCacheInfo = AppServices
-                        .tallyDataSourceSpi
-                        .getCacheUserInfo(
-                            userId = item.userId,
-                        ),
                     balanceInit = item.balanceInit.toYuan(),
                     balanceCurrent = item.balanceCurrent.toYuan(),
                     isExcluded = item.isExcluded,

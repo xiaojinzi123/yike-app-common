@@ -21,7 +21,6 @@ import com.xiaojinzi.tally.lib.res.model.tally.MoneyYuan
 import com.xiaojinzi.tally.lib.res.model.tally.TallyBillDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyLabelDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyTable
-import com.xiaojinzi.tally.lib.res.model.user.UserInfoCacheDto
 import com.xiaojinzi.tally.module.base.spi.TallyDataSourceSpi
 import com.xiaojinzi.tally.module.base.support.AppRouterBaseApi
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
@@ -50,7 +49,6 @@ sealed class LabelInfoIntent {
 data class LabelDetailItemUseCaseDto(
     val labelId: String,
     val labelName: String?,
-    val userCacheInfo: UserInfoCacheDto?,
     val amount: MoneyYuan,
     val billCount: Long,
     val billIdList: List<String>,
@@ -122,11 +120,6 @@ class LabelInfoUseCaseImpl(
                         LabelDetailItemUseCaseDto(
                             labelId = labelItem.id,
                             labelName = labelItem.name.orNull(),
-                            userCacheInfo = AppServices
-                                .tallyDataSourceSpi
-                                .getCacheUserInfo(
-                                    userId = labelItem.userId,
-                                ),
                             amount = if (billIdList.isEmpty()) {
                                 MoneyYuan()
                             } else {
@@ -162,10 +155,6 @@ class LabelInfoUseCaseImpl(
     @IntentProcess
     private suspend fun menuMore(intent: LabelInfoIntent.MenuMore) {
 
-        val currentUserInfo = AppServices
-            .userSpi
-            .requiredUserInfo()
-
         val currentBookInfo = AppServices
             .tallyDataSourceSpi
             .requiredSelectedBookInfo()
@@ -192,14 +181,12 @@ class LabelInfoUseCaseImpl(
                             content = "查看账单".toStringItemDto(),
                         )
                     )
-                    if (targetLabelInfo.userId == currentUserInfo.id) {
-                        this.add(
-                            element = MenuItem(
-                                content = "删除".toStringItemDto(),
-                                level = MenuItemLevel.Danger,
-                            ),
-                        )
-                    }
+                    this.add(
+                        element = MenuItem(
+                            content = "删除".toStringItemDto(),
+                            level = MenuItemLevel.Danger,
+                        ),
+                    )
                 },
             )
 
@@ -230,19 +217,17 @@ class LabelInfoUseCaseImpl(
             }
 
             2 -> {
-                if (currentUserInfo.id == targetLabelInfo.userId) {
-                    confirmDialogOrError(
-                        content = "确定要删除 '${intent.labelName.orEmpty()}' 标签吗?".toStringItemDto(),
+                confirmDialogOrError(
+                    content = "确定要删除 '${intent.labelName.orEmpty()}' 标签吗?".toStringItemDto(),
+                )
+                AppServices.tallyDataSourceSpi.updateLabel(
+                    target = targetLabelInfo.copy(
+                        isDeleted = true,
                     )
-                    AppServices.tallyDataSourceSpi.updateLabel(
-                        target = targetLabelInfo.copy(
-                            isDeleted = true,
-                        )
-                    )
-                    tip(
-                        content = "删除成功".toStringItemDto(),
-                    )
-                }
+                )
+                tip(
+                    content = "删除成功".toStringItemDto(),
+                )
             }
         }
 

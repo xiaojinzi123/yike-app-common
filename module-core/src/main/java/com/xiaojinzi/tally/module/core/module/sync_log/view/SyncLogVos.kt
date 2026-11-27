@@ -1,1 +1,0 @@
-package com.xiaojinzi.tally.module.core.module.sync_log.view

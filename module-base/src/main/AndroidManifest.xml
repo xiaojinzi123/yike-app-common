@@ -15,11 +15,6 @@
             android:name=".module.center_menu_select.view.CenterMenuSelectAct"
             android:theme="@style/Theme.Tally.App.Transparent" />
 
-        <activity
-            android:name=".module.web.view.WebAct"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustResize" />
-
     </application>
 
 </manifest>

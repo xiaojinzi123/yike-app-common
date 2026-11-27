@@ -24,14 +24,17 @@ import com.xiaojinzi.support.ktx.getActivity
 import com.xiaojinzi.support.ktx.newUUid
 import com.xiaojinzi.support.ktx.orNull
 import com.xiaojinzi.tally.module.base.support.AppServices
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import java.io.File
 
 @Keep
 data class BillImageCrudImageUseCaseDto(
     val uid: String = newUUid(),
-    // 远程的地址
+    // 已保存的图片地址；新增图片使用应用私有目录中的 file URI。
     val url: String?,
     val localUri: Uri?,
     val fileName: String? = null,
@@ -137,65 +140,75 @@ class BillImageCrudUseCaseImpl(
     @BusinessMVIUseCase.AutoLoading
     private suspend fun submit(intent: BillImageCrudIntent.Submit) {
         val currentImageList = imageListStateOb.first()
-        val tempFolder = File(
-            app.cacheDir,
-            "billImageTemp",
-        ).apply {
-            this.deleteRecursively()
-            this.mkdirs()
-        }
-        val resultUrlList = currentImageList
-            .map { item ->
-                if (item.url.isNullOrEmpty()) {
-                    item.localUri!!.copyFileTo(
-                        destFile = File(
-                            tempFolder,
-                            "${newUUid()}.${item.fileName?.extension.orEmpty()}"
-                        )
-                    ).let { targetFile ->
-                        val options = BitmapFactory.Options().apply {
-                            this.inJustDecodeBounds = true
-                        }
-                        // 获取目标图片的宽高
-                        BitmapFactory.decodeFile(
-                            targetFile.path, options,
-                        )
-                        val (imageWidth, imageHeight) = options.outWidth to options.outHeight
-                        LogSupport.d(
-                            tag = BillImageCrudUseCase.TAG,
-                            content = "imageWidth = $imageWidth, imageHeight = $imageHeight",
-                        )
-                        // 如果需要压缩, 就压缩一下
-                        if (imageWidth > 2000) {
-                            val targetFileAfterCompressed = File(
-                                targetFile.parentFile,
-                                "_${targetFile.name}",
-                            )
-                            CommonServices
-                                .ffmpegSpi
-                                ?.executeCommand(
-                                    command = "ffmpeg -i ${targetFile.path} -vf scale=1600:-1 ${targetFileAfterCompressed.path}",
-                                )
-                            targetFileAfterCompressed
-                        } else {
-                            targetFile
-                        }.let { targetFileAfterCompressed ->
-                            // 进行上传
-                            val targetUrl = CommonServices
-                                .aliOssSpi
-                                ?.simpleUpload(
-                                    file = targetFileAfterCompressed,
-                                )
-                            item.copy(
-                                url = targetUrl,
-                            )
-                        }
-                    }
-                } else {
-                    item
-                }
+        val resultImageList = withContext(Dispatchers.IO) {
+            val imageFolder = File(app.filesDir, "bill_images")
+            check(imageFolder.isDirectory || imageFolder.mkdirs()) {
+                "无法创建本地图片目录"
             }
-            .mapNotNull { it.url.orNull() }
+            val tempFolder = File(app.cacheDir, "billImageTemp/${newUUid()}")
+            check(tempFolder.mkdirs()) { "无法创建图片临时目录" }
+            val savedFiles = mutableListOf<File>()
+            try {
+                currentImageList.map { item ->
+                    if (!item.url.isNullOrEmpty()) {
+                        item
+                    } else {
+                        val localUri = requireNotNull(item.localUri) { "图片不存在" }
+                        require(localUri.scheme in setOf("content", "file", "android.resource")) {
+                            "请选择本地图片"
+                        }
+                        val extension = item.fileName?.extension.orEmpty()
+                            .lowercase()
+                            .takeIf { it.matches(Regex("[a-z0-9]{1,10}")) }
+                            ?: "img"
+                        val sourceFile = localUri.copyFileTo(
+                            destFile = File(tempFolder, "${newUUid()}.$extension"),
+                        )
+                        check(sourceFile.isFile && sourceFile.length() > 0L) { "无法读取图片" }
+                        val options = BitmapFactory.Options().apply {
+                            inJustDecodeBounds = true
+                        }
+                        BitmapFactory.decodeFile(sourceFile.path, options)
+                        check(options.outWidth > 0 && options.outHeight > 0) { "图片格式不支持" }
+                        val imageFile = if (options.outWidth > 2000) {
+                            val compressedFile = File(tempFolder, "${newUUid()}.jpg")
+                            try {
+                                CommonServices.ffmpegSpi?.executeCommand(
+                                    command = "ffmpeg -i ${sourceFile.path} -vf scale=1600:-1 ${compressedFile.path}",
+                                )
+                            } catch (exception: CancellationException) {
+                                throw exception
+                            } catch (_: Exception) {
+                                // 压缩不可用时保留原图。
+                            }
+                            val compressedOptions = BitmapFactory.Options().apply {
+                                inJustDecodeBounds = true
+                            }
+                            BitmapFactory.decodeFile(compressedFile.path, compressedOptions)
+                            compressedFile.takeIf {
+                                it.isFile && it.length() > 0L && compressedOptions.outWidth > 0
+                            } ?: sourceFile
+                        } else {
+                            sourceFile
+                        }
+                        val savedFile = File(imageFolder, "${newUUid()}.${imageFile.extension}")
+                        savedFiles.add(savedFile)
+                        imageFile.copyTo(target = savedFile)
+                        item.copy(
+                            url = Uri.fromFile(savedFile).toString(),
+                            localUri = null,
+                        )
+                    }
+                }
+            } catch (exception: Exception) {
+                savedFiles.forEach { it.delete() }
+                throw exception
+            } finally {
+                tempFolder.deleteRecursively()
+            }
+        }
+        imageListStateOb.emit(value = resultImageList)
+        val resultUrlList = resultImageList.mapNotNull { it.url.orNull() }
         LogSupport.d(
             tag = BillImageCrudUseCase.TAG,
             content = "resultUrlList = ${resultUrlList.joinToString()}",

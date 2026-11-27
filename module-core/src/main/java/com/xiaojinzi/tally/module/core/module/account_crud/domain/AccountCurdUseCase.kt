@@ -21,9 +21,9 @@ import com.xiaojinzi.tally.lib.res.model.exception.NoBookSelectException
 import com.xiaojinzi.tally.lib.res.model.tally.MoneyFen
 import com.xiaojinzi.tally.lib.res.model.tally.TallyAccountDto
 import com.xiaojinzi.tally.lib.res.model.tally.TallyAccountInsertDto
-import com.xiaojinzi.tally.lib.res.model.tally.TallyTable
 import com.xiaojinzi.tally.module.base.support.AppRouterCoreApi
 import com.xiaojinzi.tally.module.base.support.AppServices
+import com.xiaojinzi.tally.module.base.support.LocalLedgerIdentity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -58,12 +58,6 @@ interface AccountCrudUseCase : BusinessMVIUseCase {
     companion object {
         const val FLAG = "AccountCrudUseCase"
     }
-
-    /**
-     * 账户的数量
-     */
-    @StateHotObservable
-    val accountCountStateOb: Flow<Int?>
 
     /**
      * 编辑的 Id
@@ -140,29 +134,6 @@ class AccountCrudUseCaseImpl(
     commonUseCase = commonUseCase,
 ), AccountCrudUseCase {
 
-    override val accountCountStateOb = combine(
-        AppServices
-            .tallyDataSourceSpi
-            .subscribeDataBaseTableChangedOb(
-                TallyTable.Account, emitOneWhileSubscribe = true,
-            ),
-        AppServices
-            .tallyDataSourceSpi
-            .selectedBookStateOb,
-    ) { _, currentBookInfo ->
-        currentBookInfo?.let {
-            AppServices
-                .tallyDataSourceSpi
-                .getAccountByBookId(
-                    bookId = currentBookInfo.id,
-                    isExcludeDeleted = true,
-                )
-                .count()
-        }
-    }.sharedStateIn(
-        scope = scope,
-    )
-
     override val editIdStateOb = MutableStateFlow<String?>(value = null)
 
     override val editInfoStateOb = combine(
@@ -186,15 +157,10 @@ class AccountCrudUseCaseImpl(
     }
 
     override val canEditStateOb = combine(
-        AppServices.userSpi.latestUserIdStateOb,
         isEditStateOb,
         editInfoStateOb,
-    ) { selfUserId, isEdit, accountInfo ->
-        if (isEdit) {
-            selfUserId != null && selfUserId == accountInfo?.userId
-        } else {
-            true
-        }
+    ) { isEdit, accountInfo ->
+        !isEdit || accountInfo?.getAdapter != null
     }
 
     override val iconNameStateOb = MutableStateFlow<String?>(value = null)
@@ -287,9 +253,6 @@ class AccountCrudUseCaseImpl(
 
     @IntentProcess
     private suspend fun submit(intent: AccountCrudIntent.Submit) {
-        val userId = AppServices
-            .userSpi
-            .requiredLastUserId()
         val bookInfo = AppServices
             .tallyDataSourceSpi
             .selectedBookStateOb
@@ -338,7 +301,7 @@ class AccountCrudUseCaseImpl(
                 .tallyDataSourceSpi
                 .insertOrUpdateAccount(
                     target = TallyAccountInsertDto(
-                        userId = userId,
+                        userId = LocalLedgerIdentity.requiredId(),
                         bookId = bookInfo.id,
                         iconName = iconName,
                         name = name,
